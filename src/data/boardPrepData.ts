@@ -1,0 +1,211 @@
+export interface RevisionDeckItem {
+  id: string;
+  chapterId: string;
+  title: string;
+  keyPoints: string[];
+  boardAlerts: string[];
+}
+
+export interface CommonMistakeItem {
+  id: string;
+  topic: string;
+  incorrectApproach: string;
+  correctApproach: string;
+  examinerComment: string;
+}
+
+export interface CaseStudyItem {
+  id: string;
+  title: string;
+  chapterId: string;
+  caseText: string;
+  questions: Array<{
+    qNum: string;
+    question: string;
+    marks: number;
+    answer: string;
+    markingScheme: string;
+  }>;
+}
+
+export const REVISION_DECKS: RevisionDeckItem[] = [
+  {
+    id: 'rev-light',
+    chapterId: 'light',
+    title: 'Light: Quick 5-Minute Board Flashcard',
+    keyPoints: [
+      'Mirror Formula: 1/f = 1/v + 1/u | Magnification: m = -v/u = h_i / h_o',
+      'Lens Formula: 1/f = 1/v - 1/u | Magnification: m = +v/u = h_i / h_o',
+      'Power of Lens: P = 1 / f(in m) = 100 / f(in cm) Dioptres (D). Converging (convex) lens is +P; Diverging (concave) lens is -P.',
+      'Sign Conventions: u is ALWAYS negative. Concave mirror f is -ve; Convex mirror f is +ve. Convex lens f is +ve; Concave lens f is -ve.',
+      'Refractive Index: n = c / v | Snell\'s Law: sin(i) / sin(r) = n_2 / n_1.',
+      'Glass slab: Emergent ray is parallel to incident ray (∠i = ∠e); lateral displacement depends on slab thickness, RI, and angle i.',
+    ],
+    boardAlerts: [
+      'Never omit arrows on light rays in ray diagrams.',
+      'For virtual images, draw dotted rays behind the mirror or on the same side of the lens.',
+      'Convert focal length to metres before calculating power in Dioptres.',
+    ],
+  },
+  {
+    id: 'rev-human-eye',
+    chapterId: 'human-eye',
+    title: 'The Human Eye & Colourful World Flashcard',
+    keyPoints: [
+      'Near point of normal eye = 25 cm (Least distance of distinct vision). Far point = Infinity (∞).',
+      'Myopia (Short-sightedness): Image forms IN FRONT of retina. Corrected using CONCAVE LENS (f = -d).',
+      'Hypermetropia (Far-sightedness): Image forms BEHIND retina. Corrected using CONVEX LENS.',
+      'Presbyopia: Weakening of ciliary muscles with old age. Corrected with bifocal lenses.',
+      'Prism dispersion: Violet deviates most (shortest λ, lowest speed in glass), Red deviates least.',
+      'Rainbow: Dispersion + Internal Reflection + Refraction on exit. Sun must be behind observer.',
+      'Scattering ∝ 1 / λ^4: Sky is blue because blue scatters most; danger signals are red because red scatters least.',
+      'Twinkling of stars: Atmospheric refraction through fluctuating layers. Planets do not twinkle (extended sources).',
+      'Advanced sunrise and delayed sunset: 2 minutes each (total daylight extended by 4 minutes).',
+    ],
+    boardAlerts: [
+      'Always draw 3 diagrams for eye defects: Defective eye, Far/Near point, and Corrected eye.',
+      'Do not say "reflection" for rainbow; specify "internal reflection at inner surface of raindrop".',
+    ],
+  },
+  {
+    id: 'rev-electricity',
+    chapterId: 'electricity',
+    title: 'Electricity Master Cheat Sheet',
+    keyPoints: [
+      'Current: I = Q / t = (n * e) / t (1 A = 1 C/s). Ammeter connected in series.',
+      'Potential Difference: V = W / Q (1 V = 1 J/C). Voltmeter connected in parallel.',
+      'Ohm\'s Law: V = I * R at constant temperature. Slope of V-I graph = R.',
+      'Resistance factors: R = ρ * (l / A). Resistivity ρ depends ONLY on material and temperature, NOT dimensions!',
+      'Series: R_s = R_1 + R_2 + R_3 (Current same, Voltage splits).',
+      'Parallel: 1/R_p = 1/R_1 + 1/R_2 + 1/R_3 (Voltage same, Current splits).',
+      'Joule\'s Heating: H = I²Rt = VIt = (V²/R)t (in Joules).',
+      'Power: P = VI = I²R = V²/R (in Watts).',
+      'Commercial Unit: 1 kWh = 3.6 × 10^6 Joules (1 Unit of electricity).',
+    ],
+    boardAlerts: [
+      'When wire is stretched to double length (n=2), resistance becomes n² * R = 4R.',
+      'Fuse rating must be slightly higher than the operating current of the appliance.',
+      'In parallel, total resistance is always smaller than the smallest individual resistor.',
+    ],
+  },
+  {
+    id: 'rev-magnetism',
+    chapterId: 'magnetism',
+    title: 'Magnetic Effects of Current Flashcard',
+    keyPoints: [
+      'Field Lines: Closed continuous loops. Outside: North to South; Inside: South to North.',
+      'Field lines NEVER intersect (compass cannot point in two directions at one point).',
+      'Right-Hand Thumb Rule: Thumb = Current, Curled fingers = Magnetic field lines.',
+      'Solenoid: Magnetic field inside is uniform, strong, and parallel. Acts like a bar magnet.',
+      'Fleming\'s Left-Hand Rule (Motor): Forefinger = Field, Middle = Current, Thumb = Force/Motion (FBI).',
+      'Electric Motor: Converts electrical to mechanical energy. Split-ring commutator reverses current every half turn.',
+      'Electromagnetic Induction: Induced current generated by changing magnetic field (Faraday).',
+      'Fleming\'s Right-Hand Rule (Generator): Forefinger = Field, Thumb = Motion, Middle = Induced Current.',
+      'Domestic Wiring: 220 V, 50 Hz AC. Live (Red/Brown), Neutral (Black/Blue), Earth (Green/Yellow).',
+      'Earthing: Prevents fatal electric shocks from metallic appliances by providing low-resistance leakage path.',
+    ],
+    boardAlerts: [
+      'Use LEFT hand for motor (electric to mechanical force); RIGHT hand for generator (mechanical to induced current).',
+      'Frequency of AC in India is 50 Hz, meaning current reverses direction 100 times per second.',
+    ],
+  },
+];
+
+export const COMMON_MISTAKES: CommonMistakeItem[] = [
+  {
+    id: 'mis-1',
+    topic: 'Mirror Magnification Sign Convention',
+    incorrectApproach: 'Writing m = +v/u for spherical mirrors.',
+    correctApproach: 'Use m = -v/u for spherical mirrors, and m = +v/u for spherical lenses.',
+    examinerComment: 'A very common blunder resulting in inverted signs and incorrect deductions of image reality.',
+  },
+  {
+    id: 'mis-2',
+    topic: 'Power of Lens Dioptres Unit Conversion',
+    incorrectApproach: 'Using P = 1 / 20 = 0.05 D when focal length is given as 20 cm.',
+    correctApproach: 'Convert cm to metres first: f = 20 cm = 0.20 m => P = 1 / 0.20 = +5.0 D, or use P = 100 / f(in cm).',
+    examinerComment: 'Dioptre is strictly defined in m^-1. Substituting cm directly leads to loss of full marks.',
+  },
+  {
+    id: 'mis-3',
+    topic: 'Direction of Field Lines Inside vs Outside Solenoid/Magnet',
+    incorrectApproach: 'Saying field lines always travel from North to South.',
+    correctApproach: 'Field lines travel from North to South OUTSIDE the magnet, but from South to North INSIDE the magnet to form closed loops.',
+    examinerComment: 'CBSE frequently asks for the direction "inside a bar magnet or solenoid".',
+  },
+  {
+    id: 'mis-4',
+    topic: 'Position of Electric Fuse in Domestic Circuits',
+    incorrectApproach: 'Placing the fuse wire in the neutral line.',
+    correctApproach: 'The electric fuse must always be connected in the LIVE wire.',
+    examinerComment: 'If the fuse is placed in the neutral wire, melting the fuse disconnects neutral, but the appliance remains live at 220 V, posing a severe electrocution hazard.',
+  },
+  {
+    id: 'mis-5',
+    topic: 'Stretching a Wire & Resistance Change',
+    incorrectApproach: 'Thinking resistance only doubles when length is doubled (R\' = 2R).',
+    correctApproach: 'When stretched, volume remains constant (V = l * A). Doubling length halves cross-sectional area (A/2), so new resistance is R\' = ρ(2l / (A/2)) = 4 * ρ(l/A) = 4R.',
+    examinerComment: 'Examiners frequently test this 2-marker or 3-marker conceptual distinction.',
+  },
+];
+
+export const CASE_STUDIES: CaseStudyItem[] = [
+  {
+    id: 'cs-1',
+    title: 'Case Study 1: Solar Concentrators using Concave Mirrors',
+    chapterId: 'light',
+    caseText: `In a solar furnace, a large concave reflector is used to focus incoming parallel rays of sunlight at a single point to produce temperatures exceeding 3000 °C. The receiver is placed exactly at this point. A student visits a solar thermal power plant and notices that concave mirrors are aligned along astronomical tracking axes to keep the sun’s rays parallel to the principal axis.`,
+    questions: [
+      {
+        qNum: '(a)',
+        question: 'At what specific point on the principal axis of the concave mirror is the solar receiver mounted to achieve maximum temperature?',
+        marks: 1,
+        answer: 'At the Principal Focus (F) of the concave mirror.',
+        markingScheme: '1 mark for stating "Principal Focus".',
+      },
+      {
+        qNum: '(b)',
+        question: 'If the radius of curvature of the concave reflector is 5.0 m, calculate the distance of the receiver from the pole of the mirror.',
+        marks: 1,
+        answer: 'Focal length f = R / 2 = 5.0 / 2 = 2.5 m. The receiver must be placed at 2.5 m from the pole.',
+        markingScheme: '1 mark for correct formula f = R/2 and value 2.5 m.',
+      },
+      {
+        qNum: '(c)',
+        question: 'State two other practical applications of concave mirrors based on their optical properties.',
+        marks: 2,
+        answer: '1. Torches and vehicle headlights (bulb placed at focus produces a powerful parallel beam of light).\n2. Dentist / shaving mirrors (when held close, between focus and pole, produces an erect and magnified virtual image).',
+        markingScheme: '1 mark for each valid application with brief reason.',
+      },
+    ],
+  },
+  {
+    id: 'cs-2',
+    title: 'Case Study 2: Household Electrical Safety and Appliance Ratings',
+    chapterId: 'electricity',
+    caseText: `In a modern household, various electric appliances such as an air conditioner (2000 W), a water heater (1500 W), an electric iron (750 W), and LED bulbs (10 W each) are connected in parallel across a 220 V supply. The main distribution board contains miniature circuit breakers (MCBs) and a dedicated earth connection. An electrician is called when the fuse repeatedly trips during winter mornings.`,
+    questions: [
+      {
+        qNum: '(a)',
+        question: 'Why are all household appliances connected in parallel rather than in series?',
+        marks: 1,
+        answer: 'In parallel connection, each appliance receives the full mains voltage (220 V) and can be operated independently with its own switch without affecting others.',
+        markingScheme: '1 mark for full voltage and independent operation.',
+      },
+      {
+        qNum: '(b)',
+        question: 'Calculate the total current drawn from the mains when the water heater (1500 W) and the electric iron (750 W) operate simultaneously at 220 V.',
+        marks: 2,
+        answer: 'Total Power P = 1500 + 750 = 2250 W. Total current I = P / V = 2250 W / 220 V ≈ 10.23 A.',
+        markingScheme: '1 mark for total power, 1 mark for calculating current 10.23 A.',
+      },
+      {
+        qNum: '(c)',
+        question: 'Explain what is meant by "overloading" of an electrical circuit.',
+        marks: 1,
+        answer: 'Overloading occurs when the total electrical current drawn by simultaneously operating appliances exceeds the safe carrying capacity (current rating) of the circuit wires.',
+        markingScheme: '1 mark for clear definition mentioning exceeding current capacity.',
+      },
+    ],
+  },
+];
