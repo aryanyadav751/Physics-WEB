@@ -169,9 +169,14 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           <div>
             © {new Date().getFullYear()} Physics Lab 10. Designed for CBSE Class 10 Board Exam Aspirants.
           </div>
-          <div className="flex items-center gap-1">
-            Built with rigor for academic excellence in Secondary Science Education.
+          <div className="text-center sm:text-right">
+            Secondary Science Academic Excellence Initiative.
           </div>
+        </div>
+
+        {/* Student Creator Attribution */}
+        <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-900 text-center text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-semibold">
+          This website is made by Aryan yadav, a Student of Scale Carrer Institute.
         </div>
       </div>
     </footer>
