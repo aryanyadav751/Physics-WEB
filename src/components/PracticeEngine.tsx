@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { QUESTION_BANK } from '../data/questionBankData';
 import { QuestionItem } from '../types/physics';
+import { StudyFocusTimer } from './StudyFocusTimer';
 import {
   Timer,
   CheckCircle2,
@@ -12,6 +13,7 @@ import {
   Award,
   AlertTriangle,
   Zap,
+  BookOpen,
 } from 'lucide-react';
 
 interface PracticeEngineProps {
@@ -26,6 +28,9 @@ interface PracticeEngineProps {
 }
 
 export const PracticeEngine: React.FC<PracticeEngineProps> = ({ onRecordAttempt }) => {
+  // Navigation between Practice Tests and Study Focus Timer
+  const [engineTab, setEngineTab] = useState<'tests' | 'pomodoro'>('tests');
+
   // Setup state
   const [isTestActive, setIsTestActive] = useState<boolean>(false);
   const [selectedChapter, setSelectedChapter] = useState<string>('all');
@@ -125,11 +130,53 @@ export const PracticeEngine: React.FC<PracticeEngineProps> = ({ onRecordAttempt 
 
   const currentQ = activeQuestions[currentIndex];
 
-  // Screen 1: Test Builder Configuration
+  // Screen 1: Test Builder Configuration / Pomodoro Focus Timer
   if (!isTestActive) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xs space-y-6">
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+        {/* Navigation Switcher Tabs */}
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="inline-flex p-1.5 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs">
+            <button
+              type="button"
+              onClick={() => setEngineTab('tests')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                engineTab === 'tests'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Zap className="w-4 h-4" /> CBSE Practice & Mock Tests
+            </button>
+            <button
+              type="button"
+              onClick={() => setEngineTab('pomodoro')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                engineTab === 'pomodoro'
+                  ? 'bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Timer className="w-4 h-4 text-purple-500" /> Study Focus Timer (Pomodoro)
+            </button>
+          </div>
+
+          {engineTab === 'tests' && (
+            <button
+              type="button"
+              onClick={() => setEngineTab('pomodoro')}
+              className="text-xs font-bold text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1.5 cursor-pointer"
+            >
+              <Timer className="w-3.5 h-3.5" /> Need a focused revision block? Open Study Timer
+            </button>
+          )}
+        </div>
+
+        {/* Tab 2: Pomodoro Focus Timer */}
+        {engineTab === 'pomodoro' ? (
+          <StudyFocusTimer />
+        ) : (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xs space-y-6">
           <div className="border-b border-slate-200 dark:border-slate-800 pb-4">
             <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 font-mono">
               Practice & Mock Test Engine
@@ -231,15 +278,16 @@ export const PracticeEngine: React.FC<PracticeEngineProps> = ({ onRecordAttempt 
             <button
               type="button"
               onClick={handleStartTest}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all shadow-xs flex items-center gap-2"
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer"
             >
               Start Practice Session <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>
-      </div>
-    );
-  }
+      )}
+    </div>
+  );
+}
 
   // Screen 2: Test Submitted Scorecard
   if (isSubmitted) {

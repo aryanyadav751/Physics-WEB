@@ -3,6 +3,7 @@ import { UserProgress } from '../types/physics';
 import { CHAPTERS_DATA } from '../data/chaptersData';
 import { SIMULATIONS_LIST } from '../data/simulationsData';
 import { computeStudyBadges, getTotalBadgeXP, StudyBadge } from '../utils/studyBadges';
+import { ProgressTrendChart } from './ProgressTrendChart';
 import {
   Award,
   CheckCircle2,
@@ -177,6 +178,12 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
           </span>
         </div>
       </div>
+
+      {/* RECHARTS LEARNING TREND CHART */}
+      <ProgressTrendChart
+        progress={progress}
+        onNavigateChapter={onNavigateChapter}
+      />
 
       {/* GAMIFICATION SECTION: Study Badges */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-6">

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { cleanLatexToPlainText } from '../utils/latexToPlainText';
 import {
   Sparkles,
   Send,
@@ -112,8 +113,8 @@ export const AITutor: React.FC<AITutorProps> = ({
     }
 
     window.speechSynthesis.cancel();
-    // Strip markdown formatting for cleaner speech output
-    const cleanText = text
+    // Strip LaTeX and markdown formatting for cleaner speech output
+    const cleanText = cleanLatexToPlainText(text)
       .replace(/[#*_`$~]/g, '')
       .replace(/\[.*?\]\(.*?\)/g, '')
       .trim();
@@ -352,10 +353,13 @@ export const AITutor: React.FC<AITutorProps> = ({
 
       const data = await response.json();
 
+      const rawReply = data.reply || data.response || 'Here is the CBSE explanation for your query.';
+      const cleanReply = cleanLatexToPlainText(rawReply);
+
       const assistantMessage: ChatMessage = {
         id: `ai-${Date.now()}`,
         sender: 'assistant',
-        text: data.reply || data.response || 'Here is the CBSE explanation for your query.',
+        text: cleanReply,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
