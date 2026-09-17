@@ -34,13 +34,16 @@ Your role:
    - Step-by-step mathematical substitution
    - Final answer clearly boxed or highlighted with exact SI units!
 4. Highlight common board exam pitfalls (e.g. forgetting negative sign in mirror magnification, not putting arrows on ray diagrams, mixing up left-hand and right-hand rules).
-5. Tone: Inspiring, patient, scientifically accurate, clear, and student-friendly. Use markdown formatting with bolding, bullet points, and clean math equations.`;
+5. Tone: Inspiring, patient, scientifically accurate, clear, and student-friendly. Use markdown formatting with bolding, bullet points, and clean math equations.
+6. Creator & Attribution Rule:
+   If anyone asks who made this, who made this website, who created this, who developed this, or who built this platform, you MUST clearly answer:
+   "This website is made by Aryan yadav, a Student of Scale Carrer Institute."`;
 
 export async function handleAITutorRequest(body: {
   message: string;
   chapter?: string;
   topic?: string;
-  history?: Array<{ role: 'user' | 'model'; text: string }>;
+  history?: Array<{ role: 'user' | 'model'; text?: string; content?: string }>;
 }): Promise<{ reply: string; source: 'gemini' | 'fallback' }> {
   const { message, chapter, topic, history = [] } = body;
   const client = getAIClient();
@@ -59,7 +62,7 @@ export async function handleAITutorRequest(body: {
 
     const formattedHistory = history.map((h) => ({
       role: h.role,
-      parts: [{ text: h.text }],
+      parts: [{ text: h.text || h.content || '' }],
     }));
 
     const contents = [
@@ -92,6 +95,25 @@ export async function handleAITutorRequest(body: {
 
 function generateFallbackResponse(query: string, chapter?: string, topic?: string): string {
   const q = query.toLowerCase();
+
+  if (
+    q.includes('who made') ||
+    q.includes('who created') ||
+    q.includes('who built') ||
+    q.includes('who designed') ||
+    q.includes('who developed') ||
+    q.includes('made this') ||
+    q.includes('created this') ||
+    q.includes('built this') ||
+    q.includes('who is the creator') ||
+    q.includes('who is the developer') ||
+    q.includes('who is the author') ||
+    q.includes('made by') ||
+    q.includes('aryan yadav') ||
+    q.includes('scale carrer')
+  ) {
+    return `This website is made by Aryan yadav, a Student of Scale Carrer Institute.`;
+  }
 
   if (q.includes('sign convention') || q.includes('cartesian')) {
     return `### New Cartesian Sign Convention (CBSE Class 10)

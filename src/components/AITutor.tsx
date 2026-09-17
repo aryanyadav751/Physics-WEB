@@ -20,6 +20,7 @@ interface ChatMessage {
 }
 
 const DEFAULT_PROMPT_CHIPS = [
+  'Who made this website?',
   'Explain New Cartesian Sign Convention for mirrors with rules',
   'Why does the clear sky appear blue and sun red at sunrise?',
   'Calculate image position: u = -30 cm, f = -20 cm for concave mirror',
@@ -58,6 +59,37 @@ export const AITutor: React.FC = () => {
     setMessages((prev) => [...prev, userMessage]);
     setInputQuery('');
     setIsLoading(true);
+
+    const lower = textToSend.toLowerCase();
+    const isCreatorQuery =
+      lower.includes('who made') ||
+      lower.includes('who created') ||
+      lower.includes('who built') ||
+      lower.includes('who designed') ||
+      lower.includes('who developed') ||
+      lower.includes('made this') ||
+      lower.includes('created this') ||
+      lower.includes('built this') ||
+      lower.includes('who is the creator') ||
+      lower.includes('who is the developer') ||
+      lower.includes('who is the author') ||
+      lower.includes('made by') ||
+      lower.includes('aryan yadav') ||
+      lower.includes('scale carrer');
+
+    if (isCreatorQuery) {
+      setTimeout(() => {
+        const assistantMessage: ChatMessage = {
+          id: `ai-${Date.now()}`,
+          sender: 'assistant',
+          text: 'This website is made by Aryan yadav, a Student of Scale Carrer Institute.',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+        setIsLoading(false);
+      }, 350);
+      return;
+    }
 
     try {
       // Send query to server-side AI tutor endpoint
@@ -104,6 +136,26 @@ export const AITutor: React.FC = () => {
 
   const getLocalPedagogicalFallback = (query: string): string => {
     const q = query.toLowerCase();
+    const isCreatorQuery =
+      q.includes('who made') ||
+      q.includes('who created') ||
+      q.includes('who built') ||
+      q.includes('who designed') ||
+      q.includes('who developed') ||
+      q.includes('made this') ||
+      q.includes('created this') ||
+      q.includes('built this') ||
+      q.includes('who is the creator') ||
+      q.includes('who is the developer') ||
+      q.includes('who is the author') ||
+      q.includes('made by') ||
+      q.includes('aryan yadav') ||
+      q.includes('scale carrer');
+
+    if (isCreatorQuery) {
+      return `This website is made by Aryan yadav, a Student of Scale Carrer Institute.`;
+    }
+
     if (q.includes('sign convention') || q.includes('cartesian')) {
       return `**New Cartesian Sign Convention (CBSE Class 10 Standard):**\n\n1. All distances are measured from the **Pole (P)** for spherical mirrors, and from the **Optical Centre (O)** for spherical lenses along the principal axis.\n2. Distances measured in the direction of incident light (to the right of the origin) are taken as **Positive (+)**.\n3. Distances measured against the direction of incident light (to the left of origin) are taken as **Negative (-)**.\n4. Heights measured upwards perpendicular to the principal axis are taken as **Positive (+h)**.\n5. Heights measured downwards perpendicular to the principal axis are taken as **Negative (-h)**.\n\n⚠️ **Golden Rule for Numericals:**\n• Object distance $u$ is ALWAYS negative ($-u$).\n• Concave mirror/lens focal length $f$ is ALWAYS negative ($-f$).\n• Convex mirror/lens focal length $f$ is ALWAYS positive ($+f$).`;
     }
