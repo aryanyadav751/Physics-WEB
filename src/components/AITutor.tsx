@@ -21,11 +21,11 @@ interface ChatMessage {
 
 const DEFAULT_PROMPT_CHIPS = [
   'Who made this website?',
+  'Explain Ohm’s law with formula and units',
   'Explain New Cartesian Sign Convention for mirrors with rules',
   'Why does the clear sky appear blue and sun red at sunrise?',
   'Calculate image position: u = -30 cm, f = -20 cm for concave mirror',
   'Explain Fleming’s Left-Hand Rule and function of split rings in DC motor',
-  'Why is parallel combination preferred over series in domestic circuits?',
 ];
 
 export const AITutor: React.FC = () => {
@@ -33,7 +33,7 @@ export const AITutor: React.FC = () => {
     {
       id: 'welcome-msg',
       sender: 'assistant',
-      text: `Hello! I am your **AI Physics Tutor** for CBSE Class 10.\n\nI can help you with:\n• Step-by-step numerical solutions with Cartesian sign conventions\n• NCERT conceptual doubts (Light, Human Eye, Electricity, Magnetism)\n• Ray diagram drawing sequences & precautions\n• CBSE Board marking criteria and common student pitfalls\n\nWhat would you like to understand or solve today?`,
+      text: `Hello! I am **Enjoy Physics AI**, the dedicated Physics tutor for the **Enjoy Physics** website.\n\nI can help you master the four Class 10 CBSE Physics chapters:\n1. ⚡ **Light – Reflection and Refraction**\n2. 👁️ **The Human Eye and the Colourful World**\n3. 💡 **Electricity**\n4. 🧲 **Magnetic Effects of Electric Current**\n\nAsk me about concepts, definitions, formulas, ray diagrams, or step-by-step numericals!`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -60,7 +60,9 @@ export const AITutor: React.FC = () => {
     setInputQuery('');
     setIsLoading(true);
 
-    const lower = textToSend.toLowerCase();
+    const lower = textToSend.toLowerCase().trim();
+
+    // 1. Immediate Deterministic Creator check
     const isCreatorQuery =
       lower.includes('who made') ||
       lower.includes('who created') ||
@@ -75,19 +77,62 @@ export const AITutor: React.FC = () => {
       lower.includes('who is the author') ||
       lower.includes('made by') ||
       lower.includes('aryan yadav') ||
-      lower.includes('scale carrer');
+      lower.includes('scale carrer') ||
+      lower.includes('enjoy physics');
 
     if (isCreatorQuery) {
       setTimeout(() => {
         const assistantMessage: ChatMessage = {
           id: `ai-${Date.now()}`,
           sender: 'assistant',
-          text: 'This website is made by Aryan yadav, a Student of Scale Carrer Institute.',
+          text: 'This website is made by Aryan Yadav, a student of Scale Carrer Institute.\n\nHe created Enjoy Physics as a learning platform for Class 10 Physics students.',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
         setMessages((prev) => [...prev, assistantMessage]);
         setIsLoading(false);
-      }, 350);
+      }, 300);
+      return;
+    }
+
+    // 2. Immediate Unrelated Check
+    const unrelatedKeywords = [
+      'prime minister',
+      'president',
+      'history of',
+      'capital of',
+      'politics',
+      'chemistry',
+      'biology',
+      'photosynthesis',
+      'periodic table',
+      'acid base',
+      'chemical reaction',
+      'algebra',
+      'calculus',
+      'trigonometry',
+      'python',
+      'javascript',
+      'coding',
+      'programming',
+      'movie',
+      'song',
+      'celebrity',
+      'cricket score',
+      'weather forecast',
+      'geography',
+    ];
+
+    if (unrelatedKeywords.some((keyword) => lower.includes(keyword))) {
+      setTimeout(() => {
+        const assistantMessage: ChatMessage = {
+          id: `ai-${Date.now()}`,
+          sender: 'assistant',
+          text: 'I’m Enjoy Physics AI, so I can only help with the four Class 10 Physics chapters covered on this website: Light, The Human Eye and the Colourful World, Electricity, and Magnetic Effects of Electric Current. 😊',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+        setIsLoading(false);
+      }, 300);
       return;
     }
 
@@ -100,6 +145,7 @@ export const AITutor: React.FC = () => {
           message: textToSend.trim(),
           history: messages.slice(-6).map((m) => ({
             role: m.sender === 'user' ? 'user' : 'model',
+            text: m.text,
             content: m.text,
           })),
         }),
@@ -136,43 +182,24 @@ export const AITutor: React.FC = () => {
 
   const getLocalPedagogicalFallback = (query: string): string => {
     const q = query.toLowerCase();
-    const isCreatorQuery =
-      q.includes('who made') ||
-      q.includes('who created') ||
-      q.includes('who built') ||
-      q.includes('who designed') ||
-      q.includes('who developed') ||
-      q.includes('made this') ||
-      q.includes('created this') ||
-      q.includes('built this') ||
-      q.includes('who is the creator') ||
-      q.includes('who is the developer') ||
-      q.includes('who is the author') ||
-      q.includes('made by') ||
-      q.includes('aryan yadav') ||
-      q.includes('scale carrer');
-
-    if (isCreatorQuery) {
-      return `This website is made by Aryan yadav, a Student of Scale Carrer Institute.`;
-    }
 
     if (q.includes('sign convention') || q.includes('cartesian')) {
-      return `**New Cartesian Sign Convention (CBSE Class 10 Standard):**\n\n1. All distances are measured from the **Pole (P)** for spherical mirrors, and from the **Optical Centre (O)** for spherical lenses along the principal axis.\n2. Distances measured in the direction of incident light (to the right of the origin) are taken as **Positive (+)**.\n3. Distances measured against the direction of incident light (to the left of origin) are taken as **Negative (-)**.\n4. Heights measured upwards perpendicular to the principal axis are taken as **Positive (+h)**.\n5. Heights measured downwards perpendicular to the principal axis are taken as **Negative (-h)**.\n\n⚠️ **Golden Rule for Numericals:**\n• Object distance $u$ is ALWAYS negative ($-u$).\n• Concave mirror/lens focal length $f$ is ALWAYS negative ($-f$).\n• Convex mirror/lens focal length $f$ is ALWAYS positive ($+f$).`;
+      return `**New Cartesian Sign Convention (CBSE Class 10 Standard) ⚡:**\n\n1. All distances are measured from the **Pole (P)** for spherical mirrors, and from the **Optical Centre (O)** for spherical lenses along the principal axis.\n2. Distances measured in the direction of incident light (to the right of origin) are taken as **Positive (+)**.\n3. Distances measured against the direction of incident light (to the left of origin) are taken as **Negative (-)**.\n4. Heights measured upwards perpendicular to the principal axis are taken as **Positive (+h)**.\n5. Heights measured downwards perpendicular to the principal axis are taken as **Negative (-h)**.\n\n⚠️ **Golden Rule for Numericals:**\n• Object distance $u$ is ALWAYS negative ($-u$).\n• Concave mirror/lens focal length $f$ is ALWAYS negative ($-f$).\n• Convex mirror/lens focal length $f$ is ALWAYS positive ($+f$).`;
     }
 
     if (q.includes('sky') || q.includes('blue') || q.includes('scatter')) {
-      return `**Why Does the Sky Appear Blue? (CBSE 2-Mark Question):**\n\n• **Phenomenon:** Rayleigh Scattering of light.\n• **Principle:** Intensity of scattered light $I \\propto \\frac{1}{\\lambda^4}$ (inversely proportional to the 4th power of wavelength).\n• **Explanation:** The earth's atmosphere contains fine particles of air (nitrogen and oxygen molecules) whose size is smaller than the wavelength of visible light. Blue light has a shorter wavelength compared to red light (about 1.8 times less). Consequently, blue light is scattered much more strongly by fine atmospheric particles and enters our eyes from all directions.\n\n⚠️ **Note for Outer Space:** In space, where there is no atmosphere, no scattering occurs and the sky appears pitch dark.`;
+      return `**Why Does the Sky Appear Blue? (CBSE Class 10) 🔬:**\n\n• **Phenomenon:** Rayleigh Scattering of light.\n• **Principle:** Intensity of scattered light $I \\propto \\frac{1}{\\lambda^4}$ (inversely proportional to the 4th power of wavelength).\n• **Explanation:** The earth's atmosphere contains fine molecules of nitrogen and oxygen whose size is smaller than the wavelength of visible light. Blue light has a shorter wavelength compared to red light (about 1.8 times less). Consequently, blue light is scattered much more strongly and enters our eyes from all directions.\n\n⚠️ **Note for Outer Space:** In space where there is no atmosphere, no scattering occurs and the sky appears pitch black.`;
     }
 
     if (q.includes('parallel') || q.includes('domestic') || q.includes('series')) {
-      return `**Why Parallel Combination is Used for Domestic Circuits (3 Marks):**\n\n1. **Independent Operation:** Each electrical appliance gets its own separate ON/OFF switch. If one appliance fuses or is turned off, other appliances continue to function unaffected.\n2. **Equal Rated Voltage:** All appliances receive the full rated mains voltage ($220\\text{ V}$). In a series circuit, voltage gets divided among the appliances.\n3. **Low Total Equivalent Resistance:** In parallel, $\\frac{1}{R_p} = \\frac{1}{R_1} + \\frac{1}{R_2}$, reducing total circuit resistance so adequate total current is drawn to meet power requirements.\n4. **Current Division According to Requirement:** Each appliance draws current appropriate to its power rating (e.g., a $15\\text{ A}$ geyser draws high current, while a $0.5\\text{ A}$ bulb draws low current).`;
+      return `**Why Parallel Combination is Used for Domestic Circuits ⚡:**\n\n1. **Independent Operation:** Each electrical appliance gets its own separate ON/OFF switch. If one appliance fuses or is turned off, other appliances continue to function unaffected.\n2. **Equal Rated Voltage:** All appliances receive the full rated mains voltage ($220\\text{ V}$). In a series circuit, voltage gets divided among the appliances.\n3. **Low Total Equivalent Resistance:** In parallel, $\\frac{1}{R_p} = \\frac{1}{R_1} + \\frac{1}{R_2}$, reducing total circuit resistance so adequate current is drawn to meet power requirements.\n4. **Current Division According to Requirement:** Each appliance draws current appropriate to its power rating.`;
     }
 
     if (q.includes('motor') || q.includes('fleming') || q.includes('split ring')) {
-      return `**Electric Motor & Split-Ring Commutator (CBSE 3/5 Marks):**\n\n• **Working Principle:** When a rectangular current-carrying coil is placed in a magnetic field, it experiences equal and opposite forces on opposite arms according to **Fleming's Left-Hand Rule**, creating a torque that rotates the coil.\n• **Role of Split-Ring Commutator:**\n  1. The split ring (two half-rings P and Q) reverses the direction of current flowing through the coil arms AB and CD after every half-rotation ($180^\\circ$).\n  2. Because the current reverses in step with the arms crossing between magnetic poles, the direction of force on the arms also reverses, ensuring the coil keeps rotating continuously in the SAME direction!`;
+      return `**Electric Motor & Split-Ring Commutator 🧲:**\n\n• **Working Principle:** When a rectangular current-carrying coil is placed in a magnetic field, it experiences equal and opposite forces on opposite arms according to **Fleming's Left-Hand Rule**, creating a torque that rotates the coil.\n• **Role of Split-Ring Commutator:**\n  1. The split ring reverses the direction of current flowing through the coil arms after every half-rotation ($180^\\circ$).\n  2. Because the current reverses in step with the arms crossing between magnetic poles, the direction of force on the arms also reverses, ensuring the coil keeps rotating continuously in the SAME direction!`;
     }
 
-    return `**CBSE Physics Teacher Analysis:**\n\nRegarding your question: *"${query}"*\n\n1. **Core Concept:** In CBSE Class 10, always state the standard scientific definition first, followed by the formula with SI units.\n2. **Cartesian Signs:** When solving numericals, explicitly write *Given* with positive or negative signs before substituting into the formula.\n3. **Examiner Focus:** Ensure your ray diagrams include arrows marking the direction of light, and always write the final answer with its correct unit ($A, V, \\Omega, D, m, cm$).\n\nFeel free to ask for a specific numerical step-by-step solution or formula derivation!`;
+    return `Hello! I’m **Enjoy Physics AI** ⚡\n\nI can answer questions strictly on the 4 CBSE Class 10 Physics chapters (Light, Human Eye, Electricity, and Magnetic Effects of Electric Current).\n\nFeel free to ask a concept question, request a step-by-step numerical solution, or ask for ray diagram rules!`;
   };
 
   return (
@@ -180,13 +207,13 @@ export const AITutor: React.FC = () => {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 font-mono mb-1">
-          <Sparkles className="w-4 h-4" /> AI CBSE Physics Specialist
+          <Sparkles className="w-4 h-4" /> Dedicated CBSE Class 10 Physics Tutor
         </div>
         <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">
-          Sir Newton • Class 10 Physics Doubt Solver
+          Enjoy Physics AI • Class 10 Tutor
         </h1>
         <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
-          Ask conceptual questions, request step-by-step numerical solutions, verify ray diagram rules, or practice board-style problems.
+          Ask questions exclusively on Light, The Human Eye, Electricity, and Magnetic Effects of Electric Current.
         </p>
       </div>
 
@@ -240,7 +267,7 @@ export const AITutor: React.FC = () => {
               </div>
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-800 text-xs text-slate-500 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                <span>Sir Newton is calculating the CBSE solution...</span>
+                <span>Enjoy Physics AI is preparing your CBSE answer...</span>
               </div>
             </div>
           )}
@@ -273,7 +300,7 @@ export const AITutor: React.FC = () => {
           >
             <input
               type="text"
-              placeholder="Ask a question, paste a numerical problem, or ask for diagram rules..."
+              placeholder="Ask about Light, Human Eye, Electricity, or Magnetic Effects..."
               value={inputQuery}
               onChange={(e) => setInputQuery(e.target.value)}
               disabled={isLoading}
@@ -282,7 +309,7 @@ export const AITutor: React.FC = () => {
             <button
               type="submit"
               disabled={!inputQuery.trim() || isLoading}
-              className="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition-all disabled:opacity-40 flex items-center gap-1.5 text-xs shadow-xs"
+              className="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition-all disabled:opacity-40 flex items-center gap-1.5 text-xs shadow-xs cursor-pointer"
             >
               <Send className="w-3.5 h-3.5" /> Send
             </button>

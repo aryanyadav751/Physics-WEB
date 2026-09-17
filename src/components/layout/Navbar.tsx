@@ -67,7 +67,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="text-lg font-black tracking-tight text-slate-900 dark:text-white">
-                  Physics Lab <span className="text-blue-600 dark:text-blue-400">10</span>
+                  Enjoy Physics <span className="text-blue-600 dark:text-blue-400">10</span>
                 </span>
                 <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300">
                   CBSE
@@ -213,7 +213,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   : 'text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5" /> AI Tutor
+              <Sparkles className="w-3.5 h-3.5" /> Enjoy Physics AI
             </button>
           </div>
 
@@ -340,14 +340,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => handleNav('ai-tutor')}
             className="w-full text-left py-2 px-3 rounded-lg text-sm font-semibold text-purple-600 dark:text-purple-400 hover:bg-purple-50"
           >
-            AI Tutor (Sir Newton)
+            Enjoy Physics AI (Tutor)
           </button>
           <button
             type="button"
             onClick={() => handleNav('progress')}
             className="w-full text-left py-2 px-3 rounded-lg text-sm font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100"
           >
-            Progress & Achievements
+            Progress & Study Badges
           </button>
         </div>
       )}

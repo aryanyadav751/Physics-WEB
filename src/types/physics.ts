@@ -176,3 +176,5 @@ export interface UserProgress {
     unlockedAt?: string;
   }>;
 }
+
+export type { StudyBadge } from '../utils/studyBadges';

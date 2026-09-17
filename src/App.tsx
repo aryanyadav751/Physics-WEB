@@ -30,18 +30,27 @@ export const App: React.FC = () => {
   const [activeChapterId, setActiveChapterId] = useState<string>('light');
   const [activeSimulationId, setActiveSimulationId] = useState<string>('sim-concave-mirror');
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('enjoy_physics_dark_mode');
+      if (saved !== null) {
+        return saved === 'true';
+      }
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
   });
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [progress, setProgress] = useState<UserProgress>(loadUserProgress);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Sync dark mode class
+  // Sync dark mode class and localStorage
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
+      localStorage.setItem('enjoy_physics_dark_mode', 'true');
     } else {
       document.documentElement.classList.remove('dark');
+      localStorage.setItem('enjoy_physics_dark_mode', 'false');
     }
   }, [isDarkMode]);
 
@@ -115,10 +124,10 @@ export const App: React.FC = () => {
   };
 
   // Calculate overall syllabus percentage
-  const totalTopics = Object.values(CHAPTERS_DATA).reduce((acc, ch) => acc + ch.topics.length, 0);
+  const totalTopics = CHAPTERS_DATA.reduce((acc, ch) => acc + ch.topics.length, 0);
   const progressPercent = Math.round((progress.completedTopics.length / (totalTopics || 1)) * 100);
 
-  const selectedChapter = CHAPTERS_DATA[activeChapterId] || CHAPTERS_DATA['light'];
+  const selectedChapter = CHAPTERS_DATA.find((c) => c.id === activeChapterId) || CHAPTERS_DATA[0];
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
