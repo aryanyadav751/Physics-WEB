@@ -4,12 +4,22 @@ import {
   Send,
   Bot,
   User,
-  HelpCircle,
-  Calculator,
-  Compass,
-  Zap,
   RotateCcw,
-  BookOpen,
+  Trash2,
+  Copy,
+  Check,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
+  Image as ImageIcon,
+  X,
+  Square,
+  RefreshCw,
+  HelpCircle,
+  Lightbulb,
+  FileText,
+  AlertCircle,
 } from 'lucide-react';
 
 interface ChatMessage {
@@ -17,52 +27,232 @@ interface ChatMessage {
   sender: 'user' | 'assistant';
   text: string;
   timestamp: string;
+  image?: string; // Data URL for display
+  isError?: boolean;
 }
 
-const DEFAULT_PROMPT_CHIPS = [
-  'Who made this website?',
-  'Explain Ohm’s law with formula and units',
-  'Explain New Cartesian Sign Convention for mirrors with rules',
-  'Why does the clear sky appear blue and sun red at sunrise?',
-  'Calculate image position: u = -30 cm, f = -20 cm for concave mirror',
-  'Explain Fleming’s Left-Hand Rule and function of split rings in DC motor',
+interface AITutorProps {
+  onQuestionAsked?: () => void;
+  initialQuery?: string;
+  compactMode?: boolean;
+  onCloseCompact?: () => void;
+}
+
+const SUGGESTED_PROMPTS = [
+  { label: 'Explain a concept', prompt: 'Explain the working of an Electric Motor and the role of split rings in continuous rotation.' },
+  { label: 'Solve a numerical', prompt: 'An object 4 cm high is placed 25 cm in front of a concave mirror of focal length 15 cm. Find the position, nature, and height of the image formed.' },
+  { label: 'Quiz me', prompt: 'Quiz me on Ohm’s law, factors affecting resistance, and series/parallel resistor combinations for CBSE Class 10.' },
+  { label: 'Explain this formula', prompt: 'Explain the Mirror Formula and Linear Magnification formula with New Cartesian sign conventions.' },
+  { label: 'Give me important questions', prompt: 'Give me 5 high-yield CBSE Class 10 board exam questions on Magnetic Effects of Electric Current.' },
+  { label: 'Revise this chapter', prompt: 'Give me a rapid 5-minute revision summary of The Human Eye and the Colourful World for board exams.' },
 ];
 
-export const AITutor: React.FC = () => {
+export const AITutor: React.FC<AITutorProps> = ({
+  onQuestionAsked,
+  initialQuery,
+  compactMode = false,
+  onCloseCompact,
+}) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome-msg',
       sender: 'assistant',
-      text: `Hello! I am **Enjoy Physics AI**, the dedicated Physics tutor for the **Enjoy Physics** website.\n\nI can help you master the four Class 10 CBSE Physics chapters:\n1. ⚡ **Light – Reflection and Refraction**\n2. 👁️ **The Human Eye and the Colourful World**\n3. 💡 **Electricity**\n4. 🧲 **Magnetic Effects of Electric Current**\n\nAsk me about concepts, definitions, formulas, ray diagrams, or step-by-step numericals!`,
+      text: `Hello! I am **Enjoy Physics AI**, your dedicated tutor for CBSE Class 10 Physics.\n\nI can help you with:\n1. 🔦 **Light – Reflection and Refraction**\n2. 👁️ **The Human Eye and the Colourful World**\n3. ⚡ **Electricity**\n4. 🧲 **Magnetic Effects of Electric Current**\n\nYou can type your doubts, upload a photo of a diagram or question, or tap 🎙️ **Voice Chat** to speak your question!`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
-  const [inputQuery, setInputQuery] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const [inputQuery, setInputQuery] = useState<string>(initialQuery || '');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [selectedImage, setSelectedImage] = useState<{ data: string; mimeType: string; fileName: string } | null>(null);
+  const [voiceNotice, setVoiceNotice] = useState<string | null>(null);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const recognitionRef = useRef<any>(null);
+
+  // Auto-scroll on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isLoading]);
 
-  const handleSendMessage = async (queryText?: string) => {
-    const textToSend = queryText || inputQuery;
-    if (!textToSend.trim() || isLoading) return;
+  // Clean up speech and abort on unmount
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {}
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
+  // Text-to-Speech handler
+  const handleToggleSpeech = (msgId: string, text: string) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      setVoiceNotice('Text-to-speech is not supported by your browser.');
+      setTimeout(() => setVoiceNotice(null), 3500);
+      return;
+    }
+
+    if (speakingMessageId === msgId) {
+      window.speechSynthesis.cancel();
+      setSpeakingMessageId(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    // Strip markdown formatting for cleaner speech output
+    const cleanText = text
+      .replace(/[#*_`$~]/g, '')
+      .replace(/\[.*?\]\(.*?\)/g, '')
+      .trim();
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+
+    utterance.onend = () => {
+      setSpeakingMessageId(null);
+    };
+    utterance.onerror = () => {
+      setSpeakingMessageId(null);
+    };
+
+    setSpeakingMessageId(msgId);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // Speech Recognition (Voice Input)
+  const handleToggleVoiceInput = () => {
+    if (typeof window === 'undefined') return;
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setVoiceNotice('Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari.');
+      setTimeout(() => setVoiceNotice(null), 4000);
+      return;
+    }
+
+    if (isRecording) {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {}
+      }
+      setIsRecording(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        setIsRecording(true);
+        setVoiceNotice('🎙️ Listening... Speak your Physics question clearly.');
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        if (transcript) {
+          setInputQuery((prev) => (prev ? `${prev} ${transcript}` : transcript));
+          setVoiceNotice(`Transcribed: "${transcript}"`);
+          setTimeout(() => setVoiceNotice(null), 2500);
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        setIsRecording(false);
+        if (event.error === 'not-allowed') {
+          setVoiceNotice('Microphone access was denied. Please allow microphone permissions.');
+        } else {
+          setVoiceNotice('Voice input error. Please try again or type your doubt.');
+        }
+        setTimeout(() => setVoiceNotice(null), 4000);
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err) {
+      setIsRecording(false);
+      setVoiceNotice('Unable to start speech recognition.');
+      setTimeout(() => setVoiceNotice(null), 3500);
+    }
+  };
+
+  // Image Upload handler
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file (PNG, JPG, WebP).');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Please select an image smaller than 5 MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (uploadEvent) => {
+      const result = uploadEvent.target?.result as string;
+      setSelectedImage({
+        data: result,
+        mimeType: file.type,
+        fileName: file.name,
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Send message
+  const handleSendMessage = async (customPrompt?: string, retryText?: string, retryImg?: string) => {
+    const textToSend = customPrompt !== undefined ? customPrompt : (retryText || inputQuery);
+    const imageToSend = selectedImage;
+
+    if (!textToSend.trim() && !imageToSend && !retryImg) return;
+    if (isLoading) return;
+
+    // Trigger learning milestone badge callback
+    onQuestionAsked?.();
 
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       sender: 'user',
-      text: textToSend.trim(),
+      text: textToSend.trim() || (imageToSend ? 'Please analyze this Physics diagram or problem.' : ''),
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      image: imageToSend?.data || retryImg,
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setInputQuery('');
+    setSelectedImage(null);
     setIsLoading(true);
 
-    const lower = textToSend.toLowerCase().trim();
+    const lower = (textToSend || '').toLowerCase().trim();
 
-    // 1. Immediate Deterministic Creator check
+    // 1. Creator query fast-path
     const isCreatorQuery =
       lower.includes('who made') ||
       lower.includes('who created') ||
@@ -80,21 +270,21 @@ export const AITutor: React.FC = () => {
       lower.includes('scale carrer') ||
       lower.includes('enjoy physics');
 
-    if (isCreatorQuery) {
+    if (isCreatorQuery && !imageToSend) {
       setTimeout(() => {
         const assistantMessage: ChatMessage = {
           id: `ai-${Date.now()}`,
           sender: 'assistant',
-          text: 'This website is made by Aryan Yadav, a student of Scale Carrer Institute.\n\nHe created Enjoy Physics as a learning platform for Class 10 Physics students.',
+          text: 'This website is made by Aryan Yadav, a student of Scale Carrer Institute.',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
         setMessages((prev) => [...prev, assistantMessage]);
         setIsLoading(false);
-      }, 300);
+      }, 200);
       return;
     }
 
-    // 2. Immediate Unrelated Check
+    // 2. Out-of-scope fast-path
     const unrelatedKeywords = [
       'prime minister',
       'president',
@@ -122,7 +312,7 @@ export const AITutor: React.FC = () => {
       'geography',
     ];
 
-    if (unrelatedKeywords.some((keyword) => lower.includes(keyword))) {
+    if (!imageToSend && unrelatedKeywords.some((keyword) => lower.includes(keyword))) {
       setTimeout(() => {
         const assistantMessage: ChatMessage = {
           id: `ai-${Date.now()}`,
@@ -132,17 +322,22 @@ export const AITutor: React.FC = () => {
         };
         setMessages((prev) => [...prev, assistantMessage]);
         setIsLoading(false);
-      }, 300);
+      }, 200);
       return;
     }
 
+    // 3. Send to server-side Gemini endpoint
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
     try {
-      // Send query to server-side AI tutor endpoint
       const response = await fetch('/api/ai-tutor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: abortController.signal,
         body: JSON.stringify({
           message: textToSend.trim(),
+          image: imageToSend ? { data: imageToSend.data, mimeType: imageToSend.mimeType } : undefined,
           history: messages.slice(-6).map((m) => ({
             role: m.sender === 'user' ? 'user' : 'model',
             text: m.text,
@@ -165,64 +360,171 @@ export const AITutor: React.FC = () => {
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-    } catch (err) {
-      console.warn('AI endpoint fallback:', err);
-      // Fallback local pedagogical guidance
-      const fallbackResponse: ChatMessage = {
-        id: `ai-fallback-${Date.now()}`,
-        sender: 'assistant',
-        text: getLocalPedagogicalFallback(textToSend),
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-      setMessages((prev) => [...prev, fallbackResponse]);
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `ai-stopped-${Date.now()}`,
+            sender: 'assistant',
+            text: '⏹️ Generation was stopped.',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          },
+        ]);
+      } else {
+        console.warn('AI Tutor fallback:', err);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `ai-error-${Date.now()}`,
+            sender: 'assistant',
+            text: 'I’m Enjoy Physics AI, your CBSE Class 10 tutor. If your query is about Light, The Human Eye, Electricity, or Magnetic Effects of Electric Current, please try asking again!',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            isError: true,
+          },
+        ]);
+      }
     } finally {
       setIsLoading(false);
+      abortControllerRef.current = null;
     }
   };
 
-  const getLocalPedagogicalFallback = (query: string): string => {
-    const q = query.toLowerCase();
-
-    if (q.includes('sign convention') || q.includes('cartesian')) {
-      return `**New Cartesian Sign Convention (CBSE Class 10 Standard) ⚡:**\n\n1. All distances are measured from the **Pole (P)** for spherical mirrors, and from the **Optical Centre (O)** for spherical lenses along the principal axis.\n2. Distances measured in the direction of incident light (to the right of origin) are taken as **Positive (+)**.\n3. Distances measured against the direction of incident light (to the left of origin) are taken as **Negative (-)**.\n4. Heights measured upwards perpendicular to the principal axis are taken as **Positive (+h)**.\n5. Heights measured downwards perpendicular to the principal axis are taken as **Negative (-h)**.\n\n⚠️ **Golden Rule for Numericals:**\n• Object distance $u$ is ALWAYS negative ($-u$).\n• Concave mirror/lens focal length $f$ is ALWAYS negative ($-f$).\n• Convex mirror/lens focal length $f$ is ALWAYS positive ($+f$).`;
+  const handleStopGeneration = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
+  };
 
-    if (q.includes('sky') || q.includes('blue') || q.includes('scatter')) {
-      return `**Why Does the Sky Appear Blue? (CBSE Class 10) 🔬:**\n\n• **Phenomenon:** Rayleigh Scattering of light.\n• **Principle:** Intensity of scattered light $I \\propto \\frac{1}{\\lambda^4}$ (inversely proportional to the 4th power of wavelength).\n• **Explanation:** The earth's atmosphere contains fine molecules of nitrogen and oxygen whose size is smaller than the wavelength of visible light. Blue light has a shorter wavelength compared to red light (about 1.8 times less). Consequently, blue light is scattered much more strongly and enters our eyes from all directions.\n\n⚠️ **Note for Outer Space:** In space where there is no atmosphere, no scattering occurs and the sky appears pitch black.`;
+  const handleClearChat = () => {
+    if (window.confirm('Are you sure you want to clear this conversation?')) {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      setSpeakingMessageId(null);
+      setMessages([
+        {
+          id: 'welcome-msg',
+          sender: 'assistant',
+          text: `Hello! I am **Enjoy Physics AI**, your dedicated tutor for CBSE Class 10 Physics.\n\nAsk me any concept, formula, ray diagram, or numerical problem on the 4 supported chapters!`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        },
+      ]);
     }
+  };
 
-    if (q.includes('parallel') || q.includes('domestic') || q.includes('series')) {
-      return `**Why Parallel Combination is Used for Domestic Circuits ⚡:**\n\n1. **Independent Operation:** Each electrical appliance gets its own separate ON/OFF switch. If one appliance fuses or is turned off, other appliances continue to function unaffected.\n2. **Equal Rated Voltage:** All appliances receive the full rated mains voltage ($220\\text{ V}$). In a series circuit, voltage gets divided among the appliances.\n3. **Low Total Equivalent Resistance:** In parallel, $\\frac{1}{R_p} = \\frac{1}{R_1} + \\frac{1}{R_2}$, reducing total circuit resistance so adequate current is drawn to meet power requirements.\n4. **Current Division According to Requirement:** Each appliance draws current appropriate to its power rating.`;
+  const handleCopyText = (id: string, text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  };
+
+  const handleRetryLast = () => {
+    const lastUserMsg = [...messages].reverse().find((m) => m.sender === 'user');
+    if (lastUserMsg) {
+      handleSendMessage(undefined, lastUserMsg.text, lastUserMsg.image);
     }
-
-    if (q.includes('motor') || q.includes('fleming') || q.includes('split ring')) {
-      return `**Electric Motor & Split-Ring Commutator 🧲:**\n\n• **Working Principle:** When a rectangular current-carrying coil is placed in a magnetic field, it experiences equal and opposite forces on opposite arms according to **Fleming's Left-Hand Rule**, creating a torque that rotates the coil.\n• **Role of Split-Ring Commutator:**\n  1. The split ring reverses the direction of current flowing through the coil arms after every half-rotation ($180^\\circ$).\n  2. Because the current reverses in step with the arms crossing between magnetic poles, the direction of force on the arms also reverses, ensuring the coil keeps rotating continuously in the SAME direction!`;
-    }
-
-    return `Hello! I’m **Enjoy Physics AI** ⚡\n\nI can answer questions strictly on the 4 CBSE Class 10 Physics chapters (Light, Human Eye, Electricity, and Magnetic Effects of Electric Current).\n\nFeel free to ask a concept question, request a step-by-step numerical solution, or ask for ray diagram rules!`;
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className={`w-full ${compactMode ? 'h-full flex flex-col' : 'max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6'}`}>
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 font-mono mb-1">
-          <Sparkles className="w-4 h-4" /> Dedicated CBSE Class 10 Physics Tutor
-        </div>
-        <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">
-          Enjoy Physics AI • Class 10 Tutor
-        </h1>
-        <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
-          Ask questions exclusively on Light, The Human Eye, Electricity, and Magnetic Effects of Electric Current.
-        </p>
-      </div>
+      {!compactMode && (
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 font-mono mb-1">
+              <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400 animate-pulse" />
+              CBSE Class 10 Dedicated AI Tutor
+            </div>
+            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">
+              Enjoy Physics AI
+            </h1>
+            <p className="text-slate-600 dark:text-slate-400 text-sm mt-0.5">
+              Strictly focused on Light, Human Eye, Electricity, and Magnetic Effects of Electric Current.
+            </p>
+          </div>
 
-      {/* Main Chat Interface */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col h-[650px] overflow-hidden">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleClearChat}
+              className="px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-red-600 hover:border-red-300 dark:hover:border-red-800 transition-colors flex items-center gap-1.5"
+              title="Clear conversation"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> Clear Chat
+            </button>
+          </div>
+        </div>
+      )}
+
+      {compactMode && (
+        <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+              <Bot className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1">
+                Enjoy Physics AI
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              </div>
+              <div className="text-[10px] text-slate-500 font-mono">Class 10 CBSE Physics</div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={handleClearChat}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              title="Clear chat"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+            {onCloseCompact && (
+              <button
+                type="button"
+                onClick={onCloseCompact}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                title="Close chat drawer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Main Chat Container */}
+      <div
+        className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col ${
+          compactMode ? 'flex-1 overflow-hidden' : 'h-[640px] overflow-hidden'
+        }`}
+      >
+        {/* Voice Feedback Banner */}
+        {voiceNotice && (
+          <div className="px-4 py-2 bg-blue-50 dark:bg-blue-950/60 border-b border-blue-100 dark:border-blue-900/40 text-blue-700 dark:text-blue-300 text-xs flex items-center justify-between animate-fadeIn">
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />
+              {voiceNotice}
+            </span>
+            <button
+              type="button"
+              onClick={() => setVoiceNotice(null)}
+              className="text-blue-400 hover:text-blue-600"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        )}
+
         {/* Messages Scroll Area */}
         <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4">
           {messages.map((msg) => {
             const isAi = msg.sender === 'assistant';
+            const isSpeaking = speakingMessageId === msg.id;
+
             return (
               <div
                 key={msg.id}
@@ -230,44 +532,101 @@ export const AITutor: React.FC = () => {
               >
                 {/* Avatar */}
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
                     isAi
                       ? 'bg-blue-600 text-white shadow-xs'
-                      : 'bg-slate-700 text-white'
+                      : 'bg-slate-800 text-white dark:bg-slate-700'
                   }`}
                 >
                   {isAi ? <Bot className="w-4 h-4" /> : <User className="w-4 h-4" />}
                 </div>
 
-                {/* Message Bubble */}
+                {/* Message Box */}
                 <div
-                  className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed ${
+                  className={`group relative p-4 rounded-2xl text-xs sm:text-sm leading-relaxed ${
                     isAi
-                      ? 'bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 whitespace-pre-line'
+                      ? 'bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 rounded-tl-none whitespace-pre-line'
                       : 'bg-blue-600 text-white rounded-tr-none'
                   }`}
                 >
+                  {/* Attached Image (if any) */}
+                  {msg.image && (
+                    <div className="mb-3 rounded-xl overflow-hidden border border-white/20 dark:border-slate-700 max-w-xs">
+                      <img
+                        src={msg.image}
+                        alt="Question diagram"
+                        className="w-full h-auto object-cover max-h-48"
+                      />
+                    </div>
+                  )}
+
                   <div>{msg.text}</div>
-                  <span
-                    className={`block text-[10px] mt-2 font-mono ${
-                      isAi ? 'text-slate-400' : 'text-blue-200'
+
+                  {/* Actions & Timestamp */}
+                  <div
+                    className={`mt-2 pt-2 border-t flex items-center justify-between text-[10px] font-mono ${
+                      isAi
+                        ? 'border-slate-200/60 dark:border-slate-700/60 text-slate-400'
+                        : 'border-blue-500/60 text-blue-200'
                     }`}
                   >
-                    {msg.timestamp}
-                  </span>
+                    <span>{msg.timestamp}</span>
+
+                    {isAi && (
+                      <div className="flex items-center gap-1.5 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSpeech(msg.id, msg.text)}
+                          className={`p-1 rounded-md transition-colors ${
+                            isSpeaking
+                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                              : 'hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500'
+                          }`}
+                          title={isSpeaking ? 'Stop speaking' : 'Read response aloud'}
+                        >
+                          {isSpeaking ? (
+                            <VolumeX className="w-3.5 h-3.5 text-red-500" />
+                          ) : (
+                            <Volume2 className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleCopyText(msg.id, msg.text)}
+                          className="p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 transition-colors"
+                          title="Copy response"
+                        >
+                          {copiedId === msg.id ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-500" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             );
           })}
 
+          {/* Loading Indicator */}
           {isLoading && (
             <div className="flex gap-3 max-w-3xl mr-auto items-center">
-              <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 animate-pulse">
                 <Bot className="w-4 h-4" />
               </div>
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-800 text-xs text-slate-500 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300 flex items-center gap-3">
+                <span className="w-2 h-2 rounded-full bg-blue-600 animate-ping" />
                 <span>Enjoy Physics AI is preparing your CBSE answer...</span>
+                <button
+                  type="button"
+                  onClick={handleStopGeneration}
+                  className="ml-2 px-2 py-1 rounded-md border border-slate-300 dark:border-slate-700 text-[10px] font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center gap-1"
+                >
+                  <Square className="w-2.5 h-2.5 fill-current text-red-500" /> Stop
+                </button>
               </div>
             </div>
           )}
@@ -275,44 +634,128 @@ export const AITutor: React.FC = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Quick Suggestion Chips */}
-        <div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 overflow-x-auto flex gap-2 no-scrollbar">
-          {DEFAULT_PROMPT_CHIPS.map((chip, i) => (
+        {/* Suggested Prompts */}
+        <div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/70 border-t border-slate-100 dark:border-slate-800 overflow-x-auto flex gap-2 no-scrollbar">
+          {SUGGESTED_PROMPTS.map((p, i) => (
             <button
               key={i}
               type="button"
-              onClick={() => handleSendMessage(chip)}
-              className="text-[11px] font-medium px-3 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-blue-400 hover:text-blue-600 whitespace-nowrap transition-colors"
+              onClick={() => handleSendMessage(p.prompt)}
+              className="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 whitespace-nowrap transition-colors shadow-2xs cursor-pointer flex items-center gap-1"
             >
-              {chip}
+              <Lightbulb className="w-3 h-3 text-amber-500" />
+              {p.label}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={handleRetryLast}
+            className="text-[11px] font-semibold px-3 py-1.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-blue-400 whitespace-nowrap transition-colors flex items-center gap-1"
+            title="Retry last question"
+          >
+            <RefreshCw className="w-3 h-3" /> Retry
+          </button>
         </div>
 
+        {/* Image Attachment Preview */}
+        {selectedImage && (
+          <div className="px-4 py-2 bg-blue-50 dark:bg-blue-950/40 border-t border-blue-100 dark:border-blue-900/40 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs text-blue-800 dark:text-blue-200 font-medium truncate">
+              <ImageIcon className="w-4 h-4 text-blue-600 shrink-0" />
+              <span className="truncate">{selectedImage.fileName}</span>
+              <span className="text-[10px] text-blue-500 font-mono">(Ready to send)</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelectedImage(null)}
+              className="p-1 rounded-md text-blue-500 hover:text-blue-700 dark:hover:text-blue-300"
+              title="Remove image"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
         {/* Input Bar */}
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div className="p-3 sm:p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           <form
             onSubmit={(e) => {
               e.preventDefault();
               handleSendMessage();
             }}
-            className="flex items-center gap-2"
+            className="flex items-end gap-2"
           >
+            {/* Hidden File Input */}
             <input
-              type="text"
-              placeholder="Ask about Light, Human Eye, Electricity, or Magnetic Effects..."
-              value={inputQuery}
-              onChange={(e) => setInputQuery(e.target.value)}
-              disabled={isLoading}
-              className="flex-1 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+              className="hidden"
             />
+
+            {/* Attach Image Button */}
             <button
-              type="submit"
-              disabled={!inputQuery.trim() || isLoading}
-              className="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition-all disabled:opacity-40 flex items-center gap-1.5 text-xs shadow-xs cursor-pointer"
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:border-blue-400 transition-colors shrink-0"
+              title="Attach a Physics question or diagram photo"
             >
-              <Send className="w-3.5 h-3.5" /> Send
+              <ImageIcon className="w-4 h-4" />
             </button>
+
+            {/* Voice Chat Microphone Button */}
+            <button
+              type="button"
+              onClick={handleToggleVoiceInput}
+              className={`p-3 rounded-xl border transition-all shrink-0 flex items-center gap-1.5 ${
+                isRecording
+                  ? 'bg-red-500 border-red-600 text-white animate-pulse shadow-md shadow-red-500/20'
+                  : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-purple-600 hover:border-purple-400'
+              }`}
+              title={isRecording ? 'Stop recording' : '🎙️ Voice Chat: Speak your doubt'}
+            >
+              {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            </button>
+
+            {/* Text Input / Textarea */}
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                placeholder={
+                  isRecording
+                    ? 'Listening... Speak your physics doubt'
+                    : selectedImage
+                    ? 'Ask about this diagram or press Send...'
+                    : 'Ask about Light, Human Eye, Electricity, or Magnetic Effects...'
+                }
+                value={inputQuery}
+                onChange={(e) => setInputQuery(e.target.value)}
+                disabled={isLoading}
+                className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              />
+            </div>
+
+            {/* Send or Stop Button */}
+            {isLoading ? (
+              <button
+                type="button"
+                onClick={handleStopGeneration}
+                className="p-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition-all flex items-center justify-center shrink-0"
+                title="Stop generation"
+              >
+                <Square className="w-4 h-4 fill-current" />
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={(!inputQuery.trim() && !selectedImage) || isLoading}
+                className="p-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition-all disabled:opacity-40 flex items-center justify-center shrink-0 cursor-pointer shadow-xs"
+                title="Send question"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            )}
           </form>
         </div>
       </div>

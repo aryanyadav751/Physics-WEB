@@ -17,7 +17,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <Atom className="w-5 h-5" />
               </div>
               <span className="text-lg font-black text-slate-900 dark:text-white">
-                Physics Lab <span className="text-blue-600 dark:text-blue-400">10</span>
+                Enjoy Physics <span className="text-blue-600 dark:text-blue-400">10</span>
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
@@ -167,7 +167,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         {/* Sub-Footer */}
         <div className="pt-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
           <div>
-            © {new Date().getFullYear()} Physics Lab 10. Designed for CBSE Class 10 Board Exam Aspirants.
+            © {new Date().getFullYear()} Enjoy Physics 10. Designed for CBSE Class 10 Board Exam Aspirants.
           </div>
           <div className="text-center sm:text-right">
             Secondary Science Academic Excellence Initiative.

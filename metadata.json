@@ -1,7 +1,7 @@
 {
-  "name": "Physics Lab 10",
-  "description": "Comprehensive CBSE Class 10 Physics platform with interactive virtual experiments, full syllabus chapters, question bank, board prep, formula calculator, diagram library, and AI Physics Tutor.",
-  "requestFramePermissions": [],
+  "name": "Enjoy Physics",
+  "description": "Comprehensive CBSE Class 10 Physics platform with interactive virtual experiments, full syllabus chapters, question bank, board prep, formula calculator, diagram library, and Enjoy Physics AI tutor.",
+  "requestFramePermissions": ["microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
 

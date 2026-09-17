@@ -175,6 +175,14 @@ export interface UserProgress {
     icon: string;
     unlockedAt?: string;
   }>;
+  aiQuestionsCount?: number;
+  solvedNumericalsCount?: number;
+  dailyChallengeCompletions?: Array<{
+    date: string;
+    score: number;
+    total: number;
+  }>;
+  badgeUnlockDates?: Record<string, string>;
 }
 
 export type { StudyBadge } from '../utils/studyBadges';

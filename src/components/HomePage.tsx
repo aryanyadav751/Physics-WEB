@@ -1,6 +1,7 @@
 import React from 'react';
 import { CHAPTERS_DATA } from '../data/chaptersData';
 import { SIMULATIONS_LIST } from '../data/simulationsData';
+import { DailyChallenge } from './DailyChallenge';
 import {
   Atom,
   BookOpen,
@@ -20,9 +21,16 @@ import {
 interface HomePageProps {
   onNavigate: (view: string, subId?: string) => void;
   completedTopics: string[];
+  dailyChallengeHistory?: Array<{ date: string; score: number; total: number }>;
+  onCompleteDailyChallenge?: (attempt: { date: string; score: number; total: number }) => void;
 }
 
-export const HomePage: React.FC<HomePageProps> = ({ onNavigate, completedTopics }) => {
+export const HomePage: React.FC<HomePageProps> = ({
+  onNavigate,
+  completedTopics,
+  dailyChallengeHistory = [],
+  onCompleteDailyChallenge,
+}) => {
   return (
     <div className="space-y-16 pb-16">
       {/* 1. HERO SECTION */}
@@ -79,14 +87,23 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, completedTopics 
               <div className="text-xs font-semibold text-slate-500">Physics Board Weightage</div>
             </div>
             <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-              <div className="text-2xl font-black font-mono text-amber-600 dark:text-amber-400">Sir Newton</div>
-              <div className="text-xs font-semibold text-slate-500">24/7 AI Physics Tutor</div>
+              <div className="text-2xl font-black font-mono text-amber-600 dark:text-amber-400">Enjoy Physics AI</div>
+              <div className="text-xs font-semibold text-slate-500">24/7 CBSE Physics Tutor</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 2. CBSE SYLLABUS CHAPTER CARDS */}
+      {/* 2. DAILY CHALLENGE SECTION */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <DailyChallenge
+          completedHistory={dailyChallengeHistory}
+          onComplete={onCompleteDailyChallenge}
+          onNavigateBank={() => onNavigate('question-bank')}
+        />
+      </section>
+
+      {/* 3. CBSE SYLLABUS CHAPTER CARDS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
@@ -281,19 +298,19 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, completedTopics 
               Never Stay Stuck On a Doubt
             </span>
             <h2 className="text-2xl sm:text-3xl font-black">
-              Meet Sir Newton: Your 24/7 AI Physics Mentor
+              Meet Enjoy Physics AI: Your 24/7 CBSE Physics Mentor
             </h2>
             <p className="text-blue-100 text-sm max-w-xl">
-              Trained on CBSE Class 10 marking schemes and NCERT science pedagogy. Ask any question, verify sign conventions, or paste tough numerical problems.
+              Trained exclusively on the four CBSE Class 10 Physics chapters. Ask any question, verify sign conventions, or paste tough numerical problems.
             </p>
           </div>
 
           <button
             type="button"
             onClick={() => onNavigate('ai-tutor')}
-            className="px-6 py-3.5 bg-white text-blue-700 hover:bg-blue-50 font-bold rounded-xl text-xs sm:text-sm transition-all shadow-md shrink-0 flex items-center gap-2"
+            className="px-6 py-3.5 bg-white text-blue-700 hover:bg-blue-50 font-bold rounded-xl text-xs sm:text-sm transition-all shadow-md shrink-0 flex items-center gap-2 cursor-pointer"
           >
-            <Sparkles className="w-4 h-4 text-purple-600" /> Chat with Sir Newton
+            <Sparkles className="w-4 h-4 text-purple-600" /> Chat with Enjoy Physics AI
           </button>
         </div>
       </section>

@@ -10,6 +10,7 @@ import { BoardPrepHub } from './components/BoardPrepHub';
 import { FormulaCalculator } from './components/FormulaCalculator';
 import { DiagramsViewer } from './components/DiagramsViewer';
 import { AITutor } from './components/AITutor';
+import { FloatingAITutor } from './components/FloatingAITutor';
 import { ProgressDashboard } from './components/ProgressDashboard';
 import { GlobalSearchModal } from './components/GlobalSearchModal';
 
@@ -21,37 +22,25 @@ import {
   markSimulationCompleted,
   recordQuizAttempt,
   toggleBookmarkQuestion,
+  recordAIInteraction,
+  recordDailyChallenge,
   resetProgress,
 } from './utils/progressStorage';
+import { getInitialTheme, setTheme } from './utils/theme';
 import { UserProgress } from './types/physics';
 
 export const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<string>('home');
   const [activeChapterId, setActiveChapterId] = useState<string>('light');
   const [activeSimulationId, setActiveSimulationId] = useState<string>('sim-concave-mirror');
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('enjoy_physics_dark_mode');
-      if (saved !== null) {
-        return saved === 'true';
-      }
-      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    }
-    return false;
-  });
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => getInitialTheme() === 'dark');
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [progress, setProgress] = useState<UserProgress>(loadUserProgress);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Sync dark mode class and localStorage
+  // Sync dark mode class and localStorage using centralized theme manager
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('enjoy_physics_dark_mode', 'true');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('enjoy_physics_dark_mode', 'false');
-    }
+    setTheme(isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
   // Global keyboard shortcut for search (Ctrl+K or Cmd+K)
@@ -110,6 +99,17 @@ export const App: React.FC = () => {
     showToast(`Test recorded! Accuracy: ${attempt.accuracy}%`);
   };
 
+  const handleAIQuestionAsked = () => {
+    const updated = recordAIInteraction(progress);
+    setProgress(updated);
+  };
+
+  const handleCompleteDailyChallenge = (attempt: { date: string; score: number; total: number }) => {
+    const updated = recordDailyChallenge(attempt, progress);
+    setProgress(updated);
+    showToast(`Daily challenge saved! Score: ${attempt.score}/${attempt.total} (+${attempt.score * 15} XP)`);
+  };
+
   const handleToggleBookmark = (qId: string) => {
     const updated = toggleBookmarkQuestion(qId, progress);
     setProgress(updated);
@@ -155,6 +155,8 @@ export const App: React.FC = () => {
           <HomePage
             onNavigate={handleNavigate}
             completedTopics={progress.completedTopics}
+            dailyChallengeHistory={progress.dailyChallengeCompletions}
+            onCompleteDailyChallenge={handleCompleteDailyChallenge}
           />
         )}
 
@@ -192,7 +194,9 @@ export const App: React.FC = () => {
 
         {currentView === 'diagrams' && <DiagramsViewer />}
 
-        {currentView === 'ai-tutor' && <AITutor />}
+        {currentView === 'ai-tutor' && (
+          <AITutor onQuestionAsked={handleAIQuestionAsked} />
+        )}
 
         {currentView === 'progress' && (
           <ProgressDashboard
@@ -202,6 +206,13 @@ export const App: React.FC = () => {
           />
         )}
       </main>
+
+      {/* Floating AI Tutor for quick access across all pages */}
+      <FloatingAITutor
+        currentView={currentView}
+        onNavigate={handleNavigate}
+        onQuestionAsked={handleAIQuestionAsked}
+      />
 
       {/* Global Footer */}
       <Footer onNavigate={handleNavigate} />

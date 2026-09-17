@@ -231,14 +231,15 @@ export async function handleAITutorRequest(body: {
   message: string;
   chapter?: string;
   topic?: string;
+  image?: { data: string; mimeType: string };
   history?: Array<{ role: 'user' | 'model'; text?: string; content?: string }>;
 }): Promise<{ reply: string; source: 'gemini' | 'fallback' }> {
-  const { message, chapter, topic, history = [] } = body;
+  const { message, chapter, topic, image, history = [] } = body;
   const client = getAIClient();
 
   if (!client) {
     return {
-      reply: generateFallbackResponse(message, chapter, topic),
+      reply: generateFallbackResponse(message, chapter, topic, !!image),
       source: 'fallback',
     };
   }
@@ -253,20 +254,47 @@ export async function handleAITutorRequest(body: {
       parts: [{ text: h.text || h.content || '' }],
     }));
 
+    const userParts: any[] = [];
+    const textPrompt = `${contextPrompt}${message || ''}`.trim();
+    if (textPrompt) {
+      userParts.push({ text: textPrompt });
+    } else if (image) {
+      userParts.push({
+        text: `${contextPrompt}Please analyze this Physics diagram or question according to Class 10 CBSE syllabus.`,
+      });
+    }
+
+    if (image && image.data) {
+      let base64Clean = image.data;
+      if (base64Clean.includes('base64,')) {
+        base64Clean = base64Clean.split('base64,')[1];
+      }
+      userParts.push({
+        inlineData: {
+          data: base64Clean,
+          mimeType: image.mimeType || 'image/jpeg',
+        },
+      });
+    }
+
+    if (userParts.length === 0) {
+      userParts.push({ text: 'Hello Enjoy Physics AI!' });
+    }
+
     const contents = [
       ...formattedHistory,
       {
         role: 'user',
-        parts: [{ text: `${contextPrompt}${message}` }],
+        parts: userParts,
       },
     ];
 
     const response = await client.models.generateContent({
-      model: 'gemini-3.5-flash',
+      model: 'gemini-3.8-flash',
       contents,
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
-        temperature: 0.6,
+        temperature: 0.5,
       },
     });
 
@@ -275,14 +303,19 @@ export async function handleAITutorRequest(body: {
   } catch (error: any) {
     console.error('Gemini API Error:', error);
     return {
-      reply: generateFallbackResponse(message, chapter, topic),
+      reply: generateFallbackResponse(message, chapter, topic, !!image),
       source: 'fallback',
     };
   }
 }
 
-function generateFallbackResponse(query: string, chapter?: string, topic?: string): string {
-  const q = query.toLowerCase().trim();
+function generateFallbackResponse(
+  query: string = '',
+  chapter?: string,
+  topic?: string,
+  hasImage: boolean = false
+): string {
+  const q = (query || '').toLowerCase().trim();
 
   // 1. Check for Website Creator Question
   if (

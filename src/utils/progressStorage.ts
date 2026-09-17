@@ -54,6 +54,10 @@ export const INITIAL_PROGRESS: UserProgress = {
   bookmarkedQuestions: [],
   quizHistory: [],
   achievements: INITIAL_ACHIEVEMENTS,
+  aiQuestionsCount: 0,
+  solvedNumericalsCount: 0,
+  dailyChallengeCompletions: [],
+  badgeUnlockDates: {},
 };
 
 export function loadUserProgress(): UserProgress {
@@ -65,6 +69,10 @@ export function loadUserProgress(): UserProgress {
     return {
       ...INITIAL_PROGRESS,
       ...parsed,
+      aiQuestionsCount: parsed.aiQuestionsCount || 0,
+      solvedNumericalsCount: parsed.solvedNumericalsCount || 0,
+      dailyChallengeCompletions: parsed.dailyChallengeCompletions || [],
+      badgeUnlockDates: parsed.badgeUnlockDates || {},
       achievements: INITIAL_ACHIEVEMENTS.map((a) => {
         const existing = parsed.achievements?.find((p: any) => p.id === a.id);
         return existing || a;
@@ -82,6 +90,36 @@ export function saveUserProgress(progress: UserProgress): void {
   } catch (err) {
     console.error('Failed to persist user progress:', err);
   }
+}
+
+export function recordAIInteraction(current: UserProgress): UserProgress {
+  const updated: UserProgress = {
+    ...current,
+    aiQuestionsCount: (current.aiQuestionsCount || 0) + 1,
+  };
+  return checkAchievements(updated);
+}
+
+export function recordSolvedNumerical(current: UserProgress): UserProgress {
+  const updated: UserProgress = {
+    ...current,
+    solvedNumericalsCount: (current.solvedNumericalsCount || 0) + 1,
+  };
+  return checkAchievements(updated);
+}
+
+export function recordDailyChallenge(
+  attempt: { date: string; score: number; total: number },
+  current: UserProgress
+): UserProgress {
+  const existing = current.dailyChallengeCompletions || [];
+  const filtered = existing.filter((c) => c.date !== attempt.date);
+  const updated: UserProgress = {
+    ...current,
+    dailyChallengeCompletions: [...filtered, attempt],
+    solvedNumericalsCount: (current.solvedNumericalsCount || 0) + attempt.score,
+  };
+  return checkAchievements(updated);
 }
 
 export function toggleTopicCompleted(topicId: string, current: UserProgress): UserProgress {
@@ -158,6 +196,12 @@ export function resetProgress(): UserProgress {
 
 function checkAchievements(p: UserProgress): UserProgress {
   const now = new Date().toISOString();
+  const dateStr = new Date().toLocaleDateString('en-IN', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
   const achievements = p.achievements.map((ach) => {
     if (ach.unlockedAt) return ach; // Already unlocked
 
@@ -185,7 +229,42 @@ function checkAchievements(p: UserProgress): UserProgress {
     return ach;
   });
 
-  const finalProgress = { ...p, achievements };
+  // Update badgeUnlockDates for newly unlocked study badges
+  const currentBadgeDates = { ...(p.badgeUnlockDates || {}) };
+
+  if (!currentBadgeDates['photon-pioneer'] && p.completedTopics.filter((t) => t.includes('light')).length >= 5) {
+    currentBadgeDates['photon-pioneer'] = dateStr;
+  }
+  if (!currentBadgeDates['vision-explorer'] && p.completedTopics.filter((t) => t.includes('eye')).length >= 4) {
+    currentBadgeDates['vision-explorer'] = dateStr;
+  }
+  if (!currentBadgeDates['current-master'] && p.completedTopics.filter((t) => t.includes('elec')).length >= 4) {
+    currentBadgeDates['current-master'] = dateStr;
+  }
+  if (!currentBadgeDates['magnetic-explorer'] && p.completedTopics.filter((t) => t.includes('mag')).length >= 4) {
+    currentBadgeDates['magnetic-explorer'] = dateStr;
+  }
+  if (!currentBadgeDates['lab-explorer'] && p.completedSimulations.length >= 2) {
+    currentBadgeDates['lab-explorer'] = dateStr;
+  }
+  const solvedCount = (p.solvedNumericalsCount || 0) + p.quizHistory.reduce((acc, q) => acc + (q.score || 0), 0);
+  if (!currentBadgeDates['numerical-ninja'] && solvedCount >= 5) {
+    currentBadgeDates['numerical-ninja'] = dateStr;
+  }
+  if (!currentBadgeDates['concept-master'] && p.completedTopics.length >= 10) {
+    currentBadgeDates['concept-master'] = dateStr;
+  }
+  if (!currentBadgeDates['physics-champion'] && p.completedTopics.length >= 17) {
+    currentBadgeDates['physics-champion'] = dateStr;
+  }
+  if (!currentBadgeDates['board-ready'] && p.quizHistory.some((q) => q.accuracy >= 80)) {
+    currentBadgeDates['board-ready'] = dateStr;
+  }
+  if (!currentBadgeDates['ai-learner'] && (p.aiQuestionsCount || 0) >= 3) {
+    currentBadgeDates['ai-learner'] = dateStr;
+  }
+
+  const finalProgress = { ...p, achievements, badgeUnlockDates: currentBadgeDates };
   saveUserProgress(finalProgress);
   return finalProgress;
 }
