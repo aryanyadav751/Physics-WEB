@@ -45,8 +45,16 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <nav className="sticky top-0 z-40 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 transition-colors">
+      {/* Top Banner with Bold Attribution */}
+      <div className="w-full bg-blue-600 dark:bg-blue-700 text-white py-1.5 px-4 text-center text-xs sm:text-sm shadow-xs">
+        <p className="font-bold">
+          This website is made by Aryan yadav, a Student of Scale Carrer Institute.
+        </p>
+      </div>
+
+      <nav className="bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Brand Logo & Name */}
           <div
@@ -344,5 +352,6 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       )}
     </nav>
+  </header>
   );
 };
