@@ -9,6 +9,7 @@ import { PracticeEngine } from './components/PracticeEngine';
 import { BoardPrepHub } from './components/BoardPrepHub';
 import { FormulaCalculator } from './components/FormulaCalculator';
 import { DiagramsViewer } from './components/DiagramsViewer';
+import { FlashcardsView } from './components/FlashcardsView';
 import { AITutor } from './components/AITutor';
 import { FloatingAITutor } from './components/FloatingAITutor';
 import { ProgressDashboard } from './components/ProgressDashboard';
@@ -193,6 +194,10 @@ export const App: React.FC = () => {
         {currentView === 'formulas' && <FormulaCalculator />}
 
         {currentView === 'diagrams' && <DiagramsViewer />}
+
+        {currentView === 'flashcards' && (
+          <FlashcardsView initialChapterId={activeChapterId as any} />
+        )}
 
         {currentView === 'ai-tutor' && (
           <AITutor onQuestionAsked={handleAIQuestionAsked} />

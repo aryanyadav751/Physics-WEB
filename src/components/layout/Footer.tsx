@@ -109,6 +109,15 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <li>
                 <button
                   type="button"
+                  onClick={() => onNavigate('flashcards')}
+                  className="hover:text-blue-600 dark:hover:text-blue-400 font-semibold text-indigo-600 dark:text-indigo-400"
+                >
+                  Definition Flashcards (Active Revision)
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
                   onClick={() => onNavigate('ai-tutor')}
                   className="hover:text-blue-600 dark:hover:text-blue-400"
                 >

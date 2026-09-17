@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   Zap,
   TrendingUp,
+  Layers,
 } from 'lucide-react';
 
 interface HomePageProps {
@@ -239,8 +240,29 @@ export const HomePage: React.FC<HomePageProps> = ({
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* Tool 1 */}
+          <div
+            onClick={() => onNavigate('flashcards')}
+            className="p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all cursor-pointer space-y-3 shadow-xs relative overflow-hidden group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 flex items-center justify-center font-bold group-hover:scale-105 transition-transform">
+              <Layers className="w-5 h-5" />
+            </div>
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                Definition Flashcards
+              </h3>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">
+                Active Recall
+              </span>
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Randomize key physics definitions, formulas, and laws. Toggle visibility to test your memory for CBSE boards.
+            </p>
+          </div>
+
+          {/* Tool 2 */}
           <div
             onClick={() => onNavigate('practice')}
             className="p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-blue-400 transition-all cursor-pointer space-y-3 shadow-xs"
@@ -256,7 +278,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             </p>
           </div>
 
-          {/* Tool 2 */}
+          {/* Tool 3 */}
           <div
             onClick={() => onNavigate('formulas')}
             className="p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-blue-400 transition-all cursor-pointer space-y-3 shadow-xs"
@@ -272,7 +294,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             </p>
           </div>
 
-          {/* Tool 3 */}
+          {/* Tool 4 */}
           <div
             onClick={() => onNavigate('board-prep')}
             className="p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-blue-400 transition-all cursor-pointer space-y-3 shadow-xs"

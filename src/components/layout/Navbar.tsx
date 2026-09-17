@@ -16,6 +16,7 @@ import {
   Calculator,
   Eye,
   FileText,
+  Layers,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -206,6 +207,18 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               type="button"
+              onClick={() => handleNav('flashcards')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                currentView === 'flashcards'
+                  ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5 text-indigo-500" /> Flashcards
+            </button>
+
+            <button
+              type="button"
               onClick={() => handleNav('ai-tutor')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 currentView === 'ai-tutor'
@@ -334,6 +347,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="w-full text-left py-2 px-3 rounded-lg text-sm font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100"
           >
             Diagrams Library
+          </button>
+          <button
+            type="button"
+            onClick={() => handleNav('flashcards')}
+            className="w-full text-left py-2 px-3 rounded-lg text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 flex items-center justify-between"
+          >
+            <span>Definition Flashcards</span>
+            <span className="text-[10px] bg-indigo-100 dark:bg-indigo-900/60 px-2 py-0.5 rounded-full font-bold">New</span>
           </button>
           <button
             type="button"

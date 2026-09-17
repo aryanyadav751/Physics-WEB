@@ -3,6 +3,7 @@ import { CHAPTERS_DATA } from '../data/chaptersData';
 import { SIMULATIONS_LIST } from '../data/simulationsData';
 import { DIAGRAMS_DATA } from '../data/diagramsData';
 import { QUESTION_BANK } from '../data/questionBankData';
+import { CORE_PHYSICS_DEFINITIONS } from '../data/flashcardsData';
 import {
   Search,
   X,
@@ -12,6 +13,7 @@ import {
   Eye,
   HelpCircle,
   ArrowRight,
+  Layers,
 } from 'lucide-react';
 
 interface GlobalSearchModalProps {
@@ -78,6 +80,21 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
       }))
     : [];
 
+  // Search Flashcards & Definitions
+  const flashcardResults = trimmed
+    ? CORE_PHYSICS_DEFINITIONS.filter(
+        (c) =>
+          c.term.toLowerCase().includes(trimmed) ||
+          c.definition.toLowerCase().includes(trimmed) ||
+          (c.formulaOrUnit && c.formulaOrUnit.toLowerCase().includes(trimmed))
+      ).map((c) => ({
+        type: 'flashcard',
+        title: c.term,
+        subtitle: `Flashcard Definition • ${c.chapterName} (${c.category})`,
+        cardId: c.id,
+      }))
+    : [];
+
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-slate-950/60 backdrop-blur-xs animate-fadeIn">
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl w-full max-w-2xl overflow-hidden">
@@ -109,7 +126,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
             </div>
           )}
 
-          {trimmed && topicResults.length === 0 && simResults.length === 0 && formulaResults.length === 0 && diagResults.length === 0 && (
+          {trimmed && topicResults.length === 0 && simResults.length === 0 && formulaResults.length === 0 && diagResults.length === 0 && flashcardResults.length === 0 && (
             <div className="p-8 text-center text-slate-400 text-xs">
               No results found for "{query}". Try searching for 'refraction', 'resistance', 'lens', or 'motor'.
             </div>
@@ -194,6 +211,28 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
             >
               <div className="flex items-center gap-2.5">
                 <Eye className="w-4 h-4 text-amber-500 shrink-0" />
+                <div>
+                  <div className="font-bold text-slate-900 dark:text-white text-sm">{r.title}</div>
+                  <div className="text-slate-500">{r.subtitle}</div>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-400" />
+            </button>
+          ))}
+
+          {/* Flashcards */}
+          {flashcardResults.slice(0, 4).map((r, i) => (
+            <button
+              key={`fc-${i}`}
+              type="button"
+              onClick={() => {
+                onNavigate('flashcards');
+                onClose();
+              }}
+              className="w-full text-left p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between gap-3 text-xs"
+            >
+              <div className="flex items-center gap-2.5">
+                <Layers className="w-4 h-4 text-indigo-500 shrink-0" />
                 <div>
                   <div className="font-bold text-slate-900 dark:text-white text-sm">{r.title}</div>
                   <div className="text-slate-500">{r.subtitle}</div>
