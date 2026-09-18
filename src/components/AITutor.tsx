@@ -160,42 +160,53 @@ export const AITutor: React.FC<AITutorProps> = ({
     try {
       const recognition = new SpeechRecognition();
       recognition.lang = 'en-US';
-      recognition.interimResults = false;
+      recognition.interimResults = true;
+      recognition.continuous = false;
       recognition.maxAlternatives = 1;
+
+      let speechBuffer = '';
 
       recognition.onstart = () => {
         setIsRecording(true);
-        setVoiceNotice('🎙️ Listening... Speak your Physics question clearly.');
+        setVoiceNotice('🎙️ Listening... Speak your Physics doubt now.');
       };
 
       recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        if (transcript) {
-          setInputQuery((prev) => (prev ? `${prev} ${transcript}` : transcript));
-          setVoiceNotice(`Transcribed: "${transcript}"`);
-          setTimeout(() => setVoiceNotice(null), 2500);
+        let currentTranscript = '';
+        for (let i = 0; i < event.results.length; i++) {
+          currentTranscript += event.results[i][0].transcript;
+        }
+        if (currentTranscript) {
+          speechBuffer = currentTranscript;
+          setInputQuery(currentTranscript);
         }
       };
 
       recognition.onerror = (event: any) => {
         setIsRecording(false);
         if (event.error === 'not-allowed') {
-          setVoiceNotice('Microphone access was denied. Please allow microphone permissions.');
+          setVoiceNotice('Microphone access was denied. Please allow microphone permissions in your browser.');
+        } else if (event.error === 'no-speech') {
+          setVoiceNotice('No speech detected. Tap the mic and speak clearly.');
         } else {
-          setVoiceNotice('Voice input error. Please try again or type your doubt.');
+          setVoiceNotice(`Voice status: ${event.error}. You can also type your doubt.`);
         }
         setTimeout(() => setVoiceNotice(null), 4000);
       };
 
       recognition.onend = () => {
         setIsRecording(false);
+        if (speechBuffer) {
+          setVoiceNotice(`Transcribed: "${speechBuffer}"`);
+          setTimeout(() => setVoiceNotice(null), 3000);
+        }
       };
 
       recognitionRef.current = recognition;
       recognition.start();
     } catch (err) {
       setIsRecording(false);
-      setVoiceNotice('Unable to start speech recognition.');
+      setVoiceNotice('Unable to start speech recognition. Please check microphone permissions.');
       setTimeout(() => setVoiceNotice(null), 3500);
     }
   };
@@ -251,83 +262,7 @@ export const AITutor: React.FC<AITutorProps> = ({
     setSelectedImage(null);
     setIsLoading(true);
 
-    const lower = (textToSend || '').toLowerCase().trim();
-
-    // 1. Creator query fast-path
-    const isCreatorQuery =
-      lower.includes('who made') ||
-      lower.includes('who created') ||
-      lower.includes('who built') ||
-      lower.includes('who designed') ||
-      lower.includes('who developed') ||
-      lower.includes('made this') ||
-      lower.includes('created this') ||
-      lower.includes('built this') ||
-      lower.includes('who is the creator') ||
-      lower.includes('who is the developer') ||
-      lower.includes('who is the author') ||
-      lower.includes('made by') ||
-      lower.includes('aryan yadav') ||
-      lower.includes('scale carrer') ||
-      lower.includes('enjoy physics');
-
-    if (isCreatorQuery && !imageToSend) {
-      setTimeout(() => {
-        const assistantMessage: ChatMessage = {
-          id: `ai-${Date.now()}`,
-          sender: 'assistant',
-          text: 'This website is made by Aryan Yadav, a student of Scale Carrer Institute.',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-        setIsLoading(false);
-      }, 200);
-      return;
-    }
-
-    // 2. Out-of-scope fast-path
-    const unrelatedKeywords = [
-      'prime minister',
-      'president',
-      'history of',
-      'capital of',
-      'politics',
-      'chemistry',
-      'biology',
-      'photosynthesis',
-      'periodic table',
-      'acid base',
-      'chemical reaction',
-      'algebra',
-      'calculus',
-      'trigonometry',
-      'python',
-      'javascript',
-      'coding',
-      'programming',
-      'movie',
-      'song',
-      'celebrity',
-      'cricket score',
-      'weather forecast',
-      'geography',
-    ];
-
-    if (!imageToSend && unrelatedKeywords.some((keyword) => lower.includes(keyword))) {
-      setTimeout(() => {
-        const assistantMessage: ChatMessage = {
-          id: `ai-${Date.now()}`,
-          sender: 'assistant',
-          text: 'I’m Enjoy Physics AI, so I can only help with the four Class 10 Physics chapters covered on this website: Light, The Human Eye and the Colourful World, Electricity, and Magnetic Effects of Electric Current. 😊',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-        setIsLoading(false);
-      }, 200);
-      return;
-    }
-
-    // 3. Send to server-side Gemini endpoint
+    // Send to server-side Gemini endpoint
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
 

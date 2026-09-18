@@ -1,4 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
+import { CHAPTERS_DATA } from '../data/chaptersData';
+import { QUESTION_BANK } from '../data/questionBankData';
+import { CORE_PHYSICS_DEFINITIONS } from '../data/flashcardsData';
 
 let aiClient: GoogleGenAI | null = null;
 
@@ -10,239 +13,205 @@ function getAIClient(): GoogleGenAI | null {
   if (!aiClient) {
     aiClient = new GoogleGenAI({
       apiKey,
-      httpOptions: {
-        headers: {
-          'User-Agent': 'aistudio-build',
-        },
-      },
     });
   }
   return aiClient;
 }
 
-const SYSTEM_INSTRUCTION = `You are Enjoy Physics AI, the dedicated Physics tutor for the Enjoy Physics website.
+export const ARYAN_YADAV_RESPONSE =
+  'Aryan Yadav is the developer of this website and a Student of Scale Carrer Institute';
 
-Your job is to help Class 10 CBSE students learn and understand the Physics portion covered by this website.
+export const CREATOR_RESPONSE =
+  'This website is made by Aryan Yadav, a student of Scale Carrer Institute.';
 
-## ABSOLUTE MANDATORY DIRECTIVE: ZERO LATEX - ALWAYS USE PLAIN TEXT ONLY
+export const OUT_OF_SCOPE_RESPONSE =
+  'I’m Enjoy Physics AI, so I can only help with the four Class 10 Physics chapters covered on this website: Light, The Human Eye and the Colourful World, Electricity, and Magnetic Effects of Electric Current. 😊';
 
-CRITICAL RULE: DO NOT USE LATEX UNDER ANY CIRCUMSTANCES.
-- NEVER use LaTeX syntax, LaTeX commands, or math delimiters.
-- NEVER use dollar signs ($...$ or $$...$$).
-- NEVER use commands such as \\frac, \\dfrac, \\times, \\cdot, \\sqrt, \\text, \\mathrm, \\pm, \\approx, \\Omega, \\theta, \\lambda, etc.
-- NEVER use math blocks such as \\(...\\), \\[...\\], or \\begin{equation}.
-- ALWAYS use clean, human-readable plain text, standard keyboard characters, and simple Unicode for all formulas, equations, units, and math:
-  * For fractions: write "1/f = 1/v - 1/u", "P = 1/f", or "1/R_total = 1/R1 + 1/R2".
-  * For multiplication: use "*" or "x" (e.g. "V = I * R" or "c = 3 x 10^8 m/s").
-  * For exponents/powers: write "10^8", "m/s^2", "cm^2", "I^2 * R * t".
-  * For square roots: write "sqrt(3)" or "root(2)".
-  * For Greek letters and units: write "ohm" or "Ω" for resistance, "theta" or "θ" for angles, "mu" or "μ", "lambda" or "λ".
-  * For degrees: write "°" or "degrees" (e.g., "45°", "30 degrees").
-  * For subscripts: write simple plain text like "R1", "R2", "R_total", "n21", "v1", "v2".
-- Everything you output MUST be clean, readable, accessible plain text.
+export function isAryanYadavQuery(query: string): boolean {
+  const clean = query
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-## YOUR KNOWLEDGE SCOPE
+  // Specifically asking about Aryan Yadav himself
+  if (
+    clean === 'who is aryan yadav' ||
+    clean === 'who is aryan' ||
+    clean === 'who is aryan yadav the developer' ||
+    clean === 'who exactly is aryan yadav' ||
+    clean === 'tell me about aryan yadav' ||
+    clean === 'about aryan yadav' ||
+    clean === 'who is the developer aryan yadav' ||
+    /^(who|tell me about|what about|about)\b.*aryan yadav/i.test(clean) ||
+    /aryan yadav\b.*(who|developer|about)/i.test(clean)
+  ) {
+    return true;
+  }
 
-You may answer questions ONLY related to these four Class 10 CBSE Physics chapters:
+  return false;
+}
 
-1. Light – Reflection and Refraction
-2. The Human Eye and the Colourful World
-3. Electricity
-4. Magnetic Effects of Electric Current
+export function isWebsiteCreatorQuery(query: string): boolean {
+  const clean = query
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-You may explain:
-* Concepts
-* Definitions
-* Laws
-* Formulas
-* Derivations appropriate to Class 10
-* Numerical problems
-* Ray diagrams
-* Circuit concepts
-* Magnetic-field concepts
-* Experiments
-* Applications
-* Important questions
-* CBSE-style questions
-* Revision questions
-* Exam preparation related to these four chapters
+  // If already identified as Aryan Yadav specific query, don't hijack here
+  if (isAryanYadavQuery(query)) {
+    return false;
+  }
 
-When solving numericals:
-1. Identify the given values.
-2. State the required quantity.
-3. Write the relevant formula.
-4. Substitute the values.
-5. Calculate step-by-step.
-6. Give the final answer with the correct unit.
+  const exactPhrases = [
+    'who made this website',
+    'who created this website',
+    'who developed enjoy physics',
+    'who is the creator',
+    'who built this',
+    'who made enjoy physics',
+    'who developed this website',
+    'who is the developer of this website',
+    'who is the creator of enjoy physics',
+    'who made this',
+    'who created this',
+    'who built this website',
+    'who designed this website',
+    'who is the developer',
+    'who is creator',
+    'who is the author',
+    'who made the website',
+    'who made this app',
+    'who built the website',
+    'who created the website',
+  ];
 
-Keep explanations appropriate for a Class 10 CBSE student.
+  if (exactPhrases.includes(clean)) {
+    return true;
+  }
 
----
+  // Creator intent check: must ask who created/made/built/developed the site/app/platform
+  const isAskingWho = /\b(who|which person)\b/.test(clean) || /\b(creator|developer|author)\b/.test(clean);
+  const isCreationAction = /\b(made|created|built|developed|designed|founded|coded)\b/.test(clean) || /\b(creator|developer|author)\b/.test(clean);
+  const isSiteSubject = /\b(website|site|app|platform|project|enjoy physics|enjoyphysics|this)\b/.test(clean);
 
-# STRICT TOPIC RESTRICTION
+  // Exclude physics queries
+  const isPhysicsContext = /\b(current|voltage|resistance|ohm|mirror|lens|ray|circuit|refraction|reflection|magnetic|field|solenoid|motor|eye|spectrum|prism|joule|power|focal|dioptre)\b/.test(clean);
 
-You MUST NOT answer questions that are unrelated to the four Physics chapters listed above.
+  if (isAskingWho && isCreationAction && isSiteSubject && !isPhysicsContext) {
+    return true;
+  }
 
-Examples of questions you should NOT answer:
-* Mathematics
-* Chemistry
-* Biology
-* History
-* Geography
-* Politics
-* General programming
-* Coding
-* Current affairs
-* Entertainment
-* Personal advice
-* General knowledge unrelated to these Physics chapters
+  return false;
+}
 
-If the user asks an unrelated question, politely respond:
+const SYSTEM_INSTRUCTION = `You are Enjoy Physics AI, the dedicated, expert CBSE Class 10 Physics tutor for the Enjoy Physics website.
 
-“I’m Enjoy Physics AI, so I can only help with the four Class 10 Physics chapters covered on this website: Light, The Human Eye and the Colourful World, Electricity, and Magnetic Effects of Electric Current. 😊”
+## ABSOLUTE MANDATORY IDENTITY RULE
+- Your name is Enjoy Physics AI.
+- NEVER say "I am Gemini", "I am Google Gemini", "Google AI", "Gemini AI", or "Google's AI".
+- Do not reveal the underlying AI model/provider unless explicitly asked about technical architecture.
+- You may say: "Hi! I'm Enjoy Physics AI, your Class 10 Physics tutor."
 
-Do not provide an answer to the unrelated question after this message.
+## STRICT PRIORITY ORDER
+1. Check whether the question is specifically about Aryan Yadav.
+   → If asked "Who is Aryan Yadav?" or "Tell me about Aryan Yadav":
+   Answer EXACTLY:
+   "${ARYAN_YADAV_RESPONSE}"
+   Do not add invented personal details.
 
----
+2. Check whether it is a website creator/developer question.
+   → If asked "Who made this website?", "Who created this website?", "Who developed Enjoy Physics?", "Who is the creator?", "Who built this?", etc.:
+   Answer EXACTLY:
+   "${CREATOR_RESPONSE}"
 
-# HANDLING BORDERLINE QUESTIONS
+3. Determine whether the question is related to one of the four supported Class 10 CBSE Physics chapters:
+   1. Light – Reflection and Refraction
+   2. The Human Eye and the Colourful World
+   3. Electricity
+   4. Magnetic Effects of Electric Current
+   → If YES: Thoroughly solve, explain, or check the student's question.
 
-If a question is slightly outside the syllabus but is directly necessary to understand one of the four Physics chapters, you may give a short explanation of the required prerequisite.
-However, do not turn the conversation into a general-purpose chatbot.
+4. If it is a Physics prerequisite directly necessary to understand one of the four chapters (e.g. electric charge basics, sine rule in Snell's law, SI unit prefixes):
+   → Provide a clear, short relevant explanation.
 
-For example:
-User: “Why does a magnet attract iron?”
-This can be answered briefly if it is being asked to understand magnetic effects.
+5. If completely unrelated to the four Class 10 Physics chapters (e.g. politics, coding, general chemistry, biology, foreign capitals, movies, sports, history):
+   → Return EXACTLY:
+   "${OUT_OF_SCOPE_RESPONSE}"
+   Do NOT answer the unrelated query.
 
-But:
-User: “Tell me about the history of magnets.”
-Do not answer.
+## MANDATORY NUMERICAL SOLVING STRUCTURE
+When solving ANY numerical question, NEVER just provide a bare number or brief answer.
+You MUST follow this exact structure:
 
----
+Given:
+[List each given quantity with symbol, numerical value, and proper SI unit]
 
-# WEBSITE CREATOR QUESTION
+Required:
+[State the exact quantity to find with its symbol and target unit]
 
-If the user asks any question such as:
-* “Who made this website?”
-* “Who created this website?”
-* “Who developed Enjoy Physics?”
-* “Who is the creator?”
-* “Who built this?”
-* “Who made Enjoy Physics?”
-* “Who is Aryan Yadav?”
+Formula:
+[Write the standard Class 10 CBSE formula]
 
-Answer exactly:
-“This website is made by Aryan Yadav, a student of Scale Carrer Institute.”
+Substitution:
+[Show the formula with the given numbers substituted]
 
-Do not replace this answer with a generic statement such as “I don't know.”
+Calculation:
+[Show step-by-step arithmetic without skipping steps]
 
-If appropriate, you may add:
-“He created Enjoy Physics as a learning platform for Class 10 Physics students.”
+Final Answer:
+[Clear statement of the final value with correct unit and sign]
 
-Do not invent any additional personal information about Aryan Yadav.
+### Key Guidelines for Numericals:
+- For Light (Spherical Mirrors & Lenses): Strictly follow the New Cartesian Sign Convention!
+  * Object distance u is ALWAYS negative (-).
+  * Concave mirror: focal length f is negative (-).
+  * Convex mirror: focal length f is positive (+).
+  * Concave lens: focal length f is negative (-).
+  * Convex lens: focal length f is positive (+).
+  * Mirror formula: 1/f = 1/v + 1/u; Magnification: m = -v/u = h'/h.
+  * Lens formula: 1/f = 1/v - 1/u; Magnification: m = +v/u = h'/h.
+  * Power of a lens: P = 1/f (f MUST be converted to meters! 1 D = 1 m^-1).
+- For Electricity:
+  * V = I * R
+  * R = rho * l / A
+  * Resistors in series: R_total = R1 + R2 + ...
+  * Resistors in parallel: 1/R_total = 1/R1 + 1/R2 + ...
+  * Power: P = V * I = I^2 * R = V^2 / R
+  * Joule's law of heating: H = I^2 * R * t
+  * Commercial electrical energy: E = P * t (1 kWh = 3.6 x 10^6 J)
 
----
+## SOLUTION CHECKING
+If a student asks "Is my answer correct?" or provides a calculation:
+- Analyze the problem and perform the calculation.
+- If incorrect: clearly state that the answer needs correction, show the full correct calculation using the standard structure, and pinpoint where the mistake occurred (e.g., sign error, inverted fraction in parallel combination, forgetting to convert cm to m).
+- If correct: confirm it enthusiastically and briefly explain why.
 
-# PERSONALITY
+## CONCEPT QUESTIONS STRUCTURE
+For conceptual or theoretical questions, use this pedagogical structure:
+Simple Explanation → Scientific Explanation → Real-life Example → Formula / Rule if applicable → Quick Takeaway.
 
-Act like a friendly and knowledgeable Class 10 Physics teacher.
-Your personality should be:
-* Friendly
-* Helpful
-* Clear
-* Encouraging
-* Patient
-* Student-friendly
+## IMAGE / PHOTO QUESTION SOLVING
+When an image of a diagram, circuit, ray trace, or question paper is provided:
+1. What the question / diagram gives
+2. What is required
+3. Relevant concept / formula
+4. Step-by-step solution
+5. Final answer
+If any part of the image is illegible or missing key values, state clearly what cannot be read instead of guessing.
 
-You can occasionally use simple emojis such as ⚡ 🔬 💡 🧲 🔭, but don't overuse them.
-Do not talk like a robotic textbook.
-
----
-
-# ANSWER STYLE
-
-Prefer:
-Simple explanation → Example → Formula/Diagram if relevant → Quick takeaway
-
-For difficult concepts, explain them in simple language first and then give the scientific explanation.
-For formulas, always explain what each symbol represents.
-Example:
-V = IR
-Where:
-* V = Potential difference
-* I = Current
-* R = Resistance
-Use proper SI units.
-
----
-
-# DO NOT HALLUCINATE
-
-Never invent:
-* NCERT facts
-* CBSE rules
-* Formulas
-* Experiments
-* Definitions
-* Question-paper claims
-* Personal information about the website creator
-
-If you are unsure whether something belongs to the four permitted chapters, say that it is outside the supported Physics scope instead of guessing.
-
----
-
-# WEBSITE CONTEXT
-
-You are the AI tutor integrated into:
-Enjoy Physics
-
-Your purpose is to help students understand the Physics content available on the website.
-The main website is:
-https://enjoy-physics.vercel.app
-
-Do not repeatedly mention the website URL unless the user asks for it.
-
----
-
-# CONVERSATION EXAMPLES
-
-User:
-“Explain Ohm's law.”
-
-Assistant:
-Explain Ohm's law at Class 10 level with formula, variables, units, and an example.
-
-User:
-“Solve this electricity numerical.”
-
-Assistant:
-Solve it step-by-step and explain why the selected formula is appropriate.
-
-User:
-“What is myopia?”
-
-Assistant:
-Explain myopia according to the Class 10 chapter “The Human Eye and the Colourful World.”
-
-User:
-“Who made this website?”
-
-Assistant:
-“This website is made by Aryan Yadav, a student of Scale Carrer Institute.”
-
-User:
-“Who is the Prime Minister of India?”
-
-Assistant:
-“I’m Enjoy Physics AI, so I can only help with the four Class 10 Physics chapters covered on this website: Light, The Human Eye and the Colourful World, Electricity, and Magnetic Effects of Electric Current. 😊”
-
----
-
-# FINAL RULE
-
-Your highest priority is to remain a Class 10 CBSE Physics-only tutor.
-Do not become a general-purpose AI assistant.
-Only answer questions that fall within the four supported Physics chapters, except for the specific website-creator question described above.`;
+## ABSOLUTE MANDATORY DIRECTIVE: ZERO LATEX
+- NEVER output LaTeX syntax ($...$, $$...$$, \\(...\\), \\frac, \\times, \\Omega, etc.).
+- ALWAYS output clean plain text with standard symbols:
+  * V = I * R
+  * 1/f = 1/v - 1/u
+  * P = V * I
+  * 10^8
+  * sqrt(3)
+  * ohm or Ω
+  * degree or °
+`;
 
 export async function handleAITutorRequest(body: {
   message: string;
@@ -252,115 +221,128 @@ export async function handleAITutorRequest(body: {
   history?: Array<{ role: 'user' | 'model'; text?: string; content?: string }>;
 }): Promise<{ reply: string; source: 'gemini' | 'fallback' }> {
   const { message, chapter, topic, image, history = [] } = body;
-  const client = getAIClient();
+  const rawMessage = (message || '').trim();
 
-  if (!client) {
+  // Priority 1: Check specifically for "Who is Aryan Yadav?"
+  if (isAryanYadavQuery(rawMessage)) {
     return {
-      reply: generateFallbackResponse(message, chapter, topic, !!image),
+      reply: ARYAN_YADAV_RESPONSE,
       source: 'fallback',
     };
   }
 
-  try {
-    const contextPrompt = chapter || topic
-      ? `[Student is currently studying Chapter: "${chapter || 'General Class 10'}", Topic: "${topic || 'General'}"]\n\n`
-      : '';
+  // Priority 2: Check for website creator / developer questions
+  if (isWebsiteCreatorQuery(rawMessage)) {
+    return {
+      reply: CREATOR_RESPONSE,
+      source: 'fallback',
+    };
+  }
 
-    const formattedHistory = history.map((h) => ({
-      role: h.role,
-      parts: [{ text: h.text || h.content || '' }],
-    }));
+  // Priority 3: Gemini API Call
+  const client = getAIClient();
+  if (client) {
+    try {
+      const contextPrompt =
+        chapter || topic
+          ? `[Current CBSE Chapter Context: "${chapter || 'Class 10 Physics'}", Topic: "${topic || 'General'}"]\n\n`
+          : '';
 
-    const userParts: any[] = [];
-    const textPrompt = `${contextPrompt}${message || ''}`.trim();
-    if (textPrompt) {
-      userParts.push({ text: textPrompt });
-    } else if (image) {
-      userParts.push({
-        text: `${contextPrompt}Please analyze this Physics diagram or question according to Class 10 CBSE syllabus.`,
-      });
-    }
+      const formattedHistory = history.map((h) => ({
+        role: h.role === 'model' ? 'model' : 'user',
+        parts: [{ text: h.text || h.content || '' }],
+      }));
 
-    if (image && image.data) {
-      let base64Clean = image.data;
-      if (base64Clean.includes('base64,')) {
-        base64Clean = base64Clean.split('base64,')[1];
+      const userParts: any[] = [];
+      const textPrompt = `${contextPrompt}${rawMessage}`.trim();
+      if (textPrompt) {
+        userParts.push({ text: textPrompt });
+      } else if (image) {
+        userParts.push({
+          text: `${contextPrompt}Please analyze and solve this CBSE Class 10 Physics question/diagram step-by-step.`,
+        });
       }
-      userParts.push({
-        inlineData: {
-          data: base64Clean,
-          mimeType: image.mimeType || 'image/jpeg',
-        },
-      });
-    }
 
-    if (userParts.length === 0) {
-      userParts.push({ text: 'Hello Enjoy Physics AI!' });
-    }
-
-    const contents = [
-      ...formattedHistory,
-      {
-        role: 'user',
-        parts: userParts,
-      },
-    ];
-
-    // Candidate models in order of preference.
-    // If gemini-3.8-flash experiences high demand spikes (503 UNAVAILABLE),
-    // automatically fallback to gemini-flash-latest or gemini-3.1-flash-lite.
-    const CANDIDATE_MODELS = ['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite'];
-    let replyText: string | null = null;
-    let lastError: any = null;
-
-    for (let i = 0; i < CANDIDATE_MODELS.length; i++) {
-      const modelName = CANDIDATE_MODELS[i];
-      try {
-        const response = await client.models.generateContent({
-          model: modelName,
-          contents,
-          config: {
-            systemInstruction: SYSTEM_INSTRUCTION,
-            temperature: 0.5,
+      if (image && image.data) {
+        let base64Clean = image.data;
+        if (base64Clean.includes('base64,')) {
+          base64Clean = base64Clean.split('base64,')[1];
+        }
+        userParts.push({
+          inlineData: {
+            data: base64Clean,
+            mimeType: image.mimeType || 'image/jpeg',
           },
         });
+      }
 
-        if (response && response.text) {
-          replyText = response.text;
-          break;
-        }
-      } catch (err: any) {
-        lastError = err;
-        const status = err?.status || err?.code || err?.error?.code || err?.error?.status;
-        const msg = err?.message || String(err);
-        console.warn(`[Enjoy Physics AI] Model ${modelName} returned status ${status}: ${msg}. Attempting next option...`);
+      if (userParts.length === 0) {
+        userParts.push({ text: 'Hello Enjoy Physics AI!' });
+      }
 
-        // If the error indicates high demand / 503 or 429, pause briefly before next candidate
-        if (status === 503 || status === 429 || msg.includes('503') || msg.includes('high demand') || msg.includes('UNAVAILABLE')) {
-          await new Promise((resolve) => setTimeout(resolve, 400));
+      const contents = [
+        ...formattedHistory,
+        {
+          role: 'user',
+          parts: userParts,
+        },
+      ];
+
+      // Ordered candidates: gemini-3.1-flash-lite is fastest & most reliable, backed by gemini-3.6-flash & gemini-3.8-flash
+      const CANDIDATE_MODELS = ['gemini-3.1-flash-lite', 'gemini-3.6-flash', 'gemini-3.8-flash'];
+      let replyText: string | null = null;
+      let lastError: any = null;
+
+      for (const modelName of CANDIDATE_MODELS) {
+        // Attempt with timeout protection per model
+        try {
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error('Model generation timed out')), 8000);
+          });
+
+          const generationPromise = client.models.generateContent({
+            model: modelName,
+            contents,
+            config: {
+              systemInstruction: SYSTEM_INSTRUCTION,
+              temperature: 0.4,
+            },
+          });
+
+          const response = await Promise.race([generationPromise, timeoutPromise]);
+          if (response && response.text) {
+            replyText = response.text;
+            break;
+          }
+        } catch (err: any) {
+          lastError = err;
+          const status = err?.status || err?.code || err?.error?.code || err?.error?.status;
+          console.warn(`[Enjoy Physics AI] Model ${modelName} attempt failed (${status}): ${err?.message}. Trying next candidate...`);
         }
       }
-    }
 
-    if (replyText) {
-      return { reply: sanitizePlainText(replyText), source: 'gemini' };
-    }
+      if (replyText) {
+        return {
+          reply: sanitizePlainText(replyText),
+          source: 'gemini',
+        };
+      }
 
-    console.warn('[Enjoy Physics AI] All Gemini candidate models unavailable. Serving textbook CBSE fallback response.', lastError?.message || lastError);
-    return {
-      reply: sanitizePlainText(generateFallbackResponse(message, chapter, topic, !!image)),
-      source: 'fallback',
-    };
-  } catch (error: any) {
-    console.warn('[Enjoy Physics AI] Request handling error, using fallback:', error?.message || error);
-    return {
-      reply: sanitizePlainText(generateFallbackResponse(message, chapter, topic, !!image)),
-      source: 'fallback',
-    };
+      console.warn('[Enjoy Physics AI] All Gemini candidate models were unavailable. Falling back to local CBSE solver.', lastError?.message);
+    } catch (err: any) {
+      console.warn('[Enjoy Physics AI] Gemini request encountered error, invoking fallback:', err?.message || err);
+    }
   }
+
+  // Priority 4: Enhanced local CBSE Physics solver fallback
+  const fallbackReply = generateFallbackResponse(rawMessage, chapter, topic, !!image);
+  return {
+    reply: sanitizePlainText(fallbackReply),
+    source: 'fallback',
+  };
 }
 
-function sanitizePlainText(input: string): string {
+export function sanitizePlainText(input: string): string {
   if (!input) return '';
   let text = input;
 
@@ -422,7 +404,7 @@ function sanitizePlainText(input: string): string {
   return text;
 }
 
-function generateFallbackResponse(
+export function generateFallbackResponse(
   query: string = '',
   chapter?: string,
   topic?: string,
@@ -430,270 +412,394 @@ function generateFallbackResponse(
 ): string {
   const q = (query || '').toLowerCase().trim();
 
-  // 1. Check for Website Creator Question
-  if (
-    q.includes('who made') ||
-    q.includes('who created') ||
-    q.includes('who built') ||
-    q.includes('who designed') ||
-    q.includes('who developed') ||
-    q.includes('made this') ||
-    q.includes('created this') ||
-    q.includes('built this') ||
-    q.includes('who is the creator') ||
-    q.includes('who is the developer') ||
-    q.includes('who is the author') ||
-    q.includes('made by') ||
-    q.includes('aryan yadav') ||
-    q.includes('scale carrer') ||
-    q.includes('enjoy physics')
-  ) {
-    return `This website is made by Aryan Yadav, a student of Scale Carrer Institute.`;
+  // 1. Creator and Aryan Yadav questions
+  if (isAryanYadavQuery(query)) {
+    return ARYAN_YADAV_RESPONSE;
+  }
+  if (isWebsiteCreatorQuery(query)) {
+    return CREATOR_RESPONSE;
   }
 
-  // 2. Check for Clearly Unrelated Out-of-Scope Questions
-  const unrelatedKeywords = [
-    'prime minister',
-    'president',
-    'history of',
-    'capital of',
-    'politics',
-    'chemistry',
-    'biology',
-    'photosynthesis',
-    'periodic table',
-    'acid base',
-    'chemical reaction',
-    'algebra',
-    'calculus',
-    'trigonometry',
-    'python',
-    'javascript',
-    'coding',
-    'programming',
-    'movie',
-    'song',
-    'celebrity',
-    'cricket score',
-    'weather forecast',
-    'geography',
+  // 2. Truly Out-of-Scope Detection
+  const strictlyUnrelatedPatterns = [
+    /\b(prime minister|president|parliament|election|political party)\b/,
+    /\b(capital of|largest country|geography of|river nile|mount everest)\b/,
+    /\b(python code|javascript code|write a function|c\+\+|html css|react native)\b/,
+    /\b(movie|bollywood|hollywood|actor|actress|pop song|cricket match|ipl score|football match)\b/,
+    /\b(recipe|how to cook|bake a cake)\b/,
+    /\b(history of mughal|world war|french revolution)\b/,
+    /\b(organic chemistry|photosynthesis|digestive system|human heart anatomy|periodic table group)\b/,
   ];
 
-  if (unrelatedKeywords.some((keyword) => q.includes(keyword))) {
-    return `I’m Enjoy Physics AI, so I can only help with the four Class 10 Physics chapters covered on this website: Light, The Human Eye and the Colourful World, Electricity, and Magnetic Effects of Electric Current. 😊`;
+  const isStrictlyUnrelated = strictlyUnrelatedPatterns.some((pattern) => pattern.test(q));
+  const hasPhysicsTerm = /\b(current|volt|ohm|resistance|resistor|mirror|lens|ray|light|refraction|reflection|magnetic|field|solenoid|motor|focal|power|dioptre|spectrum|dispersion|scattering|rainbow|myopia|hypermetropia|joule|heat|watt|ampere|snell|circuit)\b/.test(q);
+
+  if (isStrictlyUnrelated && !hasPhysicsTerm && !hasImage) {
+    return OUT_OF_SCOPE_RESPONSE;
   }
 
-  // 3. Permitted Class 10 Physics Fallbacks (All Plain-Text)
-  if (q.includes('sign convention') || q.includes('cartesian')) {
-    return `### New Cartesian Sign Convention (CBSE Class 10) ⚡
-1. **Pole / Optical Centre as Origin**: The pole (P) of a mirror or optical centre (O) of a lens is taken as the origin (0, 0).
-2. **Object Always on the Left**: Incident light travels from left to right.
-3. **Distances along +X axis**: Distances measured in the direction of incident light (to the right) are **positive (+)**.
-4. **Distances along -X axis**: Distances measured against the direction of incident light (to the left) are **negative (-)**.
-   - Therefore, object distance u is **always negative**!
-5. **Heights**:
-   - Upwards perpendicular to principal axis (+Y) are **positive (+)**.
-   - Downwards perpendicular to principal axis (-Y) are **negative (-)**.
+  // 3. Dynamic Numerical Solver for common Class 10 problems
+  // Numerical Pattern A: Ohm's law: Current (I) and Resistance (R) -> find Voltage (V)
+  const ohmIRMatch = q.match(/(?:resistance|r)[^\d]*(\d+(?:\.\d+)?)\s*(?:ohm|Ω)[^\d]*(?:current|i)[^\d]*(\d+(?:\.\d+)?)\s*(?:a|amp|ampere)/i) ||
+                     q.match(/(?:current|i)[^\d]*(\d+(?:\.\d+)?)\s*(?:a|amp|ampere)[^\d]*(?:resistance|r)[^\d]*(\d+(?:\.\d+)?)\s*(?:ohm|Ω)/i);
+  if (ohmIRMatch) {
+    const isCurrentFirst = /current|amp/i.test(ohmIRMatch[0].split(/\d+/)[0]);
+    const iVal = parseFloat(isCurrentFirst ? ohmIRMatch[1] : ohmIRMatch[2]);
+    const rVal = parseFloat(isCurrentFirst ? ohmIRMatch[2] : ohmIRMatch[1]);
+    const vVal = iVal * rVal;
+    return `Given:
+Resistance R = ${rVal} ohm
+Electric Current I = ${iVal} A
 
-💡 **Quick Takeaway**:
-- Concave mirror / concave lens focal length f is **negative (-)**.
-- Convex mirror / convex lens focal length f is **positive (+)**.`;
-  }
-
-  if (q.includes('ohm') || q.includes('resistance') || q.includes('v=ir') || q.includes('electric current')) {
-    return `### Ohm's Law (CBSE Class 10) ⚡
-**Statement**: At a constant temperature, the electric current (I) flowing through a metallic conductor is directly proportional to the potential difference (V) across its ends.
+Required:
+Potential difference V across the conductor
 
 Formula:
-V = I * R
+V = I * R (Ohm's Law)
 
-Where:
-* V = Potential difference (in Volts, V)
-* I = Electric current (in Amperes, A)
-* R = Resistance of the conductor (in Ohms, Ω)
+Substitution:
+V = ${iVal} * ${rVal}
 
-**Factors affecting Resistance (R):**
-1. **Length (l)**: R is directly proportional to length (l).
-2. **Area of cross-section (A)**: R is inversely proportional to cross-sectional area (A), i.e., R is proportional to 1/A.
-3. **Resistivity of material (ρ)**: R = ρ * (l / A)
-4. **Temperature**: Resistance increases with temperature in metallic conductors.`;
+Calculation:
+V = ${vVal} V
+
+Final Answer:
+The potential difference across the conductor is ${vVal} V.`;
   }
 
-  if (q.includes('fleming') || q.includes('left hand') || q.includes('right hand') || q.includes('motor')) {
-    return `### Fleming's Left-Hand Rule (Used in Electric Motor) 🧲
+  // Numerical Pattern B: Ohm's law: Voltage (V) and Resistance (R) -> find Current (I)
+  const ohmVRMatch = q.match(/(?:voltage|potential difference|v)[^\d]*(\d+(?:\.\d+)?)\s*(?:v|volt)[^\d]*(?:resistance|r)[^\d]*(\d+(?:\.\d+)?)\s*(?:ohm|Ω)/i) ||
+                     q.match(/(?:resistance|r)[^\d]*(\d+(?:\.\d+)?)\s*(?:ohm|Ω)[^\d]*(?:voltage|potential difference|v)[^\d]*(\d+(?:\.\d+)?)\s*(?:v|volt)/i);
+  if (ohmVRMatch) {
+    const isVoltFirst = /volt/i.test(ohmVRMatch[0].split(/\d+/)[0]);
+    const vVal = parseFloat(isVoltFirst ? ohmVRMatch[1] : ohmVRMatch[2]);
+    const rVal = parseFloat(isVoltFirst ? ohmVRMatch[2] : ohmVRMatch[1]);
+    const iVal = +(vVal / rVal).toFixed(2);
+    return `Given:
+Potential difference V = ${vVal} V
+Resistance R = ${rVal} ohm
+
+Required:
+Electric current I
+
+Formula:
+I = V / R (From Ohm's Law V = I * R)
+
+Substitution:
+I = ${vVal} / ${rVal}
+
+Calculation:
+I = ${iVal} A
+
+Final Answer:
+The current flowing through the circuit is ${iVal} A.`;
+  }
+
+  // Numerical Pattern C: Series Resistors
+  const seriesMatch = q.match(/(\d+(?:\.\d+)?)\s*(?:ohm|Ω)\s*(?:and|,|\+)\s*(\d+(?:\.\d+)?)\s*(?:ohm|Ω).*(?:series|equivalent)/i);
+  if (seriesMatch) {
+    const r1 = parseFloat(seriesMatch[1]);
+    const r2 = parseFloat(seriesMatch[2]);
+    const rTotal = r1 + r2;
+    return `Given:
+Resistor R1 = ${r1} ohm
+Resistor R2 = ${r2} ohm
+Connection: Series
+
+Required:
+Equivalent Resistance R_total
+
+Formula:
+R_total = R1 + R2
+
+Substitution:
+R_total = ${r1} + ${r2}
+
+Calculation:
+R_total = ${rTotal} ohm
+
+Final Answer:
+The equivalent resistance of the series combination is ${rTotal} ohm.`;
+  }
+
+  // Numerical Pattern D: Parallel Resistors
+  const parallelMatch = q.match(/(\d+(?:\.\d+)?)\s*(?:ohm|Ω)\s*(?:and|,|\+)\s*(\d+(?:\.\d+)?)\s*(?:ohm|Ω).*(?:parallel)/i);
+  if (parallelMatch) {
+    const r1 = parseFloat(parallelMatch[1]);
+    const r2 = parseFloat(parallelMatch[2]);
+    const rTotal = +((r1 * r2) / (r1 + r2)).toFixed(2);
+    return `Given:
+Resistor R1 = ${r1} ohm
+Resistor R2 = ${r2} ohm
+Connection: Parallel
+
+Required:
+Equivalent Resistance R_total
+
+Formula:
+1 / R_total = (1 / R1) + (1 / R2) = (R1 + R2) / (R1 * R2)
+R_total = (R1 * R2) / (R1 + R2)
+
+Substitution:
+R_total = (${r1} * ${r2}) / (${r1} + ${r2})
+
+Calculation:
+R_total = ${r1 * r2} / ${r1 + r2} = ${rTotal} ohm
+
+Final Answer:
+The equivalent resistance of the parallel combination is ${rTotal} ohm.`;
+  }
+
+  // Numerical Pattern E: Lens Power (P = 1/f)
+  const powerMatch = q.match(/(?:focal length|f)[^\d]*(\d+(?:\.\d+)?)\s*(cm|m).*(?:power)/i) ||
+                     q.match(/(?:power)[^\d]*(\d+(?:\.\d+)?)\s*(?:d|dioptre).*(?:focal length)/i);
+  if (powerMatch && q.includes('focal length')) {
+    const fVal = parseFloat(powerMatch[1]);
+    const unit = powerMatch[2].toLowerCase();
+    const fInMeters = unit === 'cm' ? fVal / 100 : fVal;
+    const isConcave = q.includes('concave');
+    const fSigned = isConcave ? -fInMeters : fInMeters;
+    const pVal = +(1 / fSigned).toFixed(2);
+    return `Given:
+Focal length f = ${isConcave ? '-' : '+'}${fVal} ${unit} = ${fSigned} m (${isConcave ? 'Concave lens has negative focal length' : 'Convex lens has positive focal length'})
+
+Required:
+Power of the lens P
+
+Formula:
+P = 1 / f (where focal length f must be in meters)
+
+Substitution:
+P = 1 / (${fSigned})
+
+Calculation:
+P = ${pVal} D
+
+Final Answer:
+The power of the lens is ${pVal} D (Dioptres).`;
+  }
+
+  // Numerical Pattern F: Electric Power (P = V * I)
+  const powerVIMatch = q.match(/(?:voltage|v)[^\d]*(\d+(?:\.\d+)?)\s*(?:v|volt)[^\d]*(?:current|i)[^\d]*(\d+(?:\.\d+)?)\s*(?:a|amp)/i);
+  if (powerVIMatch && (q.includes('power') || q.includes('watt'))) {
+    const vVal = parseFloat(powerVIMatch[1]);
+    const iVal = parseFloat(powerVIMatch[2]);
+    const pVal = vVal * iVal;
+    return `Given:
+Potential difference V = ${vVal} V
+Current I = ${iVal} A
+
+Required:
+Electric Power P
+
+Formula:
+P = V * I
+
+Substitution:
+P = ${vVal} * ${iVal}
+
+Calculation:
+P = ${pVal} W
+
+Final Answer:
+The electric power consumed is ${pVal} W.`;
+  }
+
+  // 4. Conceptual CBSE Explanations
+  if (q.includes('sign convention') || q.includes('cartesian')) {
+    return `### New Cartesian Sign Convention (CBSE Class 10) ⚡
+1. **Origin**: The pole (P) of a spherical mirror or optical centre (O) of a spherical lens is taken as the origin (0, 0).
+2. **Object Position**: The object is always placed to the left of the mirror/lens. Incident light travels from left to right.
+3. **Distances to the Right (+X axis)**: Measured in the direction of incident light are **positive (+)**.
+4. **Distances to the Left (-X axis)**: Measured opposite to the direction of incident light are **negative (-)**.
+   - Therefore, object distance u is **always negative (-)**!
+5. **Heights**:
+   - Upwards perpendicular to principal axis (+Y axis) are **positive (+)**.
+   - Downwards perpendicular to principal axis (-Y axis) are **negative (-)**.
+
+💡 **Class 10 Focal Length Rules**:
+- Concave mirror / Concave lens: focal length f is **negative (-)**.
+- Convex mirror / Convex lens: focal length f is **positive (+)**.`;
+  }
+
+  if (q.includes('ohm') || q.includes('v=ir')) {
+    return `### Ohm's Law (CBSE Class 10) ⚡
+**Simple Explanation**:
+Ohm's law shows that if you increase electrical push (voltage), the electric current increases in exact proportion, as long as the temperature stays the same.
+
+**Scientific Statement**:
+At constant temperature, the electric current (I) flowing through a metallic conductor is directly proportional to the potential difference (V) across its ends:
+V is proportional to I, or V = I * R
+
+**Variables & Units**:
+* V = Potential difference across the conductor (in Volts, V)
+* I = Electric current flowing through the conductor (in Amperes, A)
+* R = Constant of proportionality called Resistance (in Ohms, Ω)
+
+**Factors Affecting Resistance (R)**:
+1. **Length of conductor (l)**: R is directly proportional to length (R ∝ l).
+2. **Area of cross-section (A)**: R is inversely proportional to area (R ∝ 1/A).
+3. **Nature of material (ρ)**: R = ρ * (l / A), where ρ is electrical resistivity in Ω·m.
+4. **Temperature**: Resistance of metals increases with temperature.
+
+💡 **Quick Takeaway**: V = I * R. To double the current at a fixed voltage, halve the resistance!`;
+  }
+
+  if (q.includes('fleming') || q.includes('left hand') || q.includes('motor')) {
+    return `### Fleming's Left-Hand Rule & Electric Motor 🧲
+**Simple Explanation**:
+When a current-carrying wire is kept inside a magnetic field, it experiences a magnetic force that pushes it. Fleming's Left-Hand Rule tells you exactly which way it will move.
+
+**Scientific Rule**:
 Stretch the thumb, forefinger, and centre finger of your left hand mutually perpendicular to each other:
 * **Forefinger**: Points in the direction of the **Magnetic Field** (B, North to South).
 * **Centre finger**: Points in the direction of the **Electric Current** (I).
 * **Thumb**: Points in the direction of **Force / Motion** (F) acting on the conductor.
 
-💡 **Quick Takeaway**: Remember the acronym **FBI** (Force = Thumb, B-Field = Forefinger, I-Current = Centre finger).`;
+💡 **Easy Acronym**: Remember **FBI**
+* F = Thumb (Force / Motion)
+* B = Forefinger (Magnetic Field)
+* I = Centre finger (Electric Current)
+
+**Electric Motor Application**:
+In an electric motor, opposite forces act on the two arms of a rectangular coil (one pushed down, one pushed up), creating rotation. The split-ring commutator reverses the current every half turn to keep rotation continuous in one direction.`;
   }
 
   if (q.includes('myopia') || q.includes('hypermetropia') || q.includes('eye defect') || q.includes('presbyopia')) {
-    return `### Myopia vs Hypermetropia (CBSE Class 10) 👁️
+    return `### Defects of Vision and Their Correction (CBSE Class 10) 👁️
 1. **Myopia (Near-sightedness)**:
-   - Defect: Can see near objects clearly, but cannot see distant objects distinctly.
-   - Cause: Excessive curvature of the eye lens or elongation of the eyeball.
-   - Image formed: In front of the retina.
-   - **Correction**: **Concave lens** of suitable focal length.
+   - **Condition**: Person can see nearby objects clearly, but cannot see distant objects distinctly. Far point comes closer than infinity.
+   - **Causes**: (i) Excessive curvature of the eye lens, or (ii) Elongation of the eyeball.
+   - **Image position**: Image of a distant object forms **in front of the retina**.
+   - **Correction**: **Concave lens** of suitable power (which diverges rays before entering the eye so the image forms right on the retina).
 
 2. **Hypermetropia (Far-sightedness)**:
-   - Defect: Can see distant objects clearly, but cannot see near objects distinctly.
-   - Cause: Focal length of the eye lens is too long or eyeball has become too small.
-   - Image formed: Behind the retina.
-   - **Correction**: **Convex lens** of suitable focal length.`;
+   - **Condition**: Person can see distant objects clearly, but cannot see nearby objects distinctly. Near point moves farther than 25 cm.
+   - **Causes**: (i) Focal length of the eye lens is too long, or (ii) Eyeball has become too small.
+   - **Image position**: Image of a nearby object forms **behind the retina**.
+   - **Correction**: **Convex lens** of suitable power (converges incoming rays to assist the eye lens).
+
+3. **Presbyopia (Old-age defect)**:
+   - Weakening of ciliary muscles and diminishing flexibility of crystalline lens with age. Corrected by **bifocal lenses** (upper concave, lower convex).`;
   }
 
   if (q.includes('rainbow') || q.includes('dispersion') || q.includes('sky blue') || q.includes('scattering')) {
-    return `### Atmospheric Optics: Dispersion & Scattering 🔬
-1. **Rainbow Formation**:
-   - Caused by dispersion, refraction, and internal reflection of sunlight by tiny spherical raindrops.
-   - Sequence: Refraction & dispersion -> Internal reflection -> Refraction upon exit.
-   - The Sun must always be behind the observer!
+    return `### Atmospheric Optical Phenomena (CBSE Class 10) 🌈
+1. **Dispersion through a Prism**:
+   - Splitting of white light into its component seven colors (VIBGYOR) when passing through a prism.
+   - Violet bends the most (shortest wavelength, lowest speed in glass); Red bends the least (longest wavelength, highest speed in glass).
 
-2. **Why is the Sky Blue?**:
-   - Fine atmospheric molecules scatter shorter wavelengths (blue/violet) much more strongly than longer wavelengths (red) according to Rayleigh's law:
-   Scattering is proportional to 1 / (λ^4)
-   - This scattered blue light enters our eyes from all angles.`;
+2. **Rainbow Formation**:
+   - Sunlight entering spherical raindrops undergoes **Refraction and Dispersion** at the front surface, **Internal Reflection** at the back surface, and **Refraction** again upon emerging into the air.
+   - The Sun must be directly behind the observer.
+
+3. **Why the Sky is Blue**:
+   - Fine atmospheric molecules (N2, O2) have sizes smaller than the wavelength of visible light.
+   - Rayleigh scattering: Scattering intensity is proportional to 1 / (λ^4). Shorter wavelengths (blue/violet) scatter nearly 10 times more effectively than red light, filling the sky with blue light.`;
   }
 
-  if (q.includes('mirror formula') || q.includes('lens formula') || q.includes('magnification') || q.includes('power of lens')) {
-    return `### Formulas & Magnification in Optics (CBSE Class 10) 📐
-1. **Mirror Formula**:
+  if (q.includes('mirror formula') || q.includes('lens formula') || q.includes('magnification')) {
+    return `### Mirror & Lens Formulas with Magnification (CBSE Class 10) 📐
+1. **Spherical Mirror Formula**:
    1/f = 1/v + 1/u
-   - Linear Magnification (m): m = h' / h = -v / u
+   - Linear Magnification: m = h' / h = -v / u
 
-2. **Lens Formula**:
+2. **Spherical Lens Formula**:
    1/f = 1/v - 1/u
-   - Linear Magnification (m): m = h' / h = +v / u
+   - Linear Magnification: m = h' / h = +v / u
 
 3. **Power of a Lens (P)**:
-   P = 1 / f (where focal length f must be in meters!)
-   - SI Unit: Dioptre (D)
-   - Convex lens: focal length is positive (+), so Power is positive (+).
-   - Concave lens: focal length is negative (-), so Power is negative (-).
+   P = 1 / f (focal length f MUST be converted into meters!)
+   - SI Unit: Dioptre (D). 1 D = 1 m^-1.
+   - Convex lens: f is (+), so P is (+).
+   - Concave lens: f is (-), so P is (-).
 
-💡 **Key CBSE Tip**:
-- If |m| > 1: Image is magnified.
-- If |m| < 1: Image is diminished.
-- If m is negative (-): Image is Real and Inverted.
-- If m is positive (+): Image is Virtual and Erect.`;
+💡 **Magnification Interpretation**:
+- |m| > 1: Image is magnified.
+- |m| < 1: Image is diminished.
+- m is negative (-): Image is Real and Inverted.
+- m is positive (+): Image is Virtual and Erect.`;
   }
 
   if (q.includes('snell') || q.includes('refractive index') || q.includes('refraction')) {
-    return `### Laws of Refraction & Snell's Law (CBSE Class 10) 🌟
-1. **First Law**: The incident ray, refracted ray, and the normal to the interface at the point of incidence all lie in the same plane.
-2. **Snell's Law**: The ratio of the sine of the angle of incidence to the sine of the angle of refraction is constant for a given pair of media:
-   sin(i) / sin(r) = constant = n21 (Refractive index of medium 2 with respect to medium 1).
+    return `### Laws of Refraction & Snell's Law (CBSE Class 10) 🔬
+1. **First Law**: The incident ray, the refracted ray, and the normal to the interface at the point of incidence all lie in the same plane.
+2. **Snell's Law (Second Law)**:
+   The ratio of the sine of angle of incidence (i) to the sine of angle of refraction (r) is constant for a given pair of media:
+   sin(i) / sin(r) = constant = n21
+   (where n21 is the refractive index of medium 2 with respect to medium 1).
 
 3. **Absolute Refractive Index (n)**:
    n = Speed of light in vacuum (c) / Speed of light in the medium (v)
-   n = c / v (where c = 3 * 10^8 m/s)
-   - Since c is always greater than or equal to v, the absolute refractive index n is always >= 1.
-   - Optically denser medium has a higher refractive index and bends light towards the normal.`;
+   n = c / v (where c = 3 x 10^8 m/s)
+   - Refractive index has no units.
+   - Higher refractive index = optically denser medium = light slows down and bends **towards the normal**.`;
   }
 
-  if (q.includes('series') || q.includes('parallel') || q.includes('equivalent resistance')) {
-    return `### Resistors in Series vs Parallel (CBSE Class 10) 🔌
+  if (q.includes('series') || q.includes('parallel')) {
+    return `### Resistors in Series vs Parallel (CBSE Class 10) ⚡
 1. **Series Combination**:
-   - Current (I) remains the same through all resistors.
-   - Total potential difference (V) divides: V = V1 + V2 + V3.
-   - Equivalent Resistance:
-     R_total = R1 + R2 + R3
-   - Equivalent resistance is greater than the highest individual resistance.
+   - Current (I) is identical through each resistor.
+   - Voltage divides: V = V1 + V2 + V3
+   - Equivalent Resistance: R_total = R1 + R2 + R3
+   - Equivalent resistance is greater than the largest individual resistance.
 
 2. **Parallel Combination**:
-   - Potential difference (V) across each resistor is the same.
-   - Total current (I) divides: I = I1 + I2 + I3.
-   - Equivalent Resistance:
-     1 / R_total = 1 / R1 + 1 / R2 + 1 / R3
-   - Equivalent resistance is smaller than the lowest individual resistance.
+   - Voltage (V) is identical across each resistor.
+   - Current divides: I = I1 + I2 + I3
+   - Equivalent Resistance: 1 / R_total = 1 / R1 + 1 / R2 + 1 / R3
+   - Equivalent resistance is smaller than the smallest individual resistance.
 
-💡 **Why parallel is preferred in home circuits**:
-- Each appliance gets the full 220V supply voltage.
-- Each appliance can be switched on/off independently.
-- If one appliance fails, the other appliances continue working.`;
+💡 **Why domestic household wiring uses Parallel**:
+- Every appliance gets the full 220 V supply voltage.
+- Appliances can be turned ON/OFF independently without breaking the entire circuit.
+- If one appliance blows or fails, other appliances continue running normally.`;
   }
 
-  if (q.includes('joule') || q.includes('heating') || q.includes('electric power') || q.includes('kwh')) {
-    return `### Joule's Law of Heating & Electric Power (CBSE Class 10) ⚡
+  if (q.includes('joule') || q.includes('heating') || q.includes('power') || q.includes('kwh')) {
+    return `### Joule's Law of Heating & Electrical Energy (CBSE Class 10) ⚡
 1. **Joule's Law of Heating**:
-   Heat produced in a resistor is directly proportional to:
+   Heat produced (H) in a resistor is directly proportional to:
    - Square of current (I^2)
    - Resistance (R)
    - Time (t) for which current flows
-   Formula:
-   H = I^2 * R * t = V * I * t = (V^2 / R) * t (in Joules, J)
+   Formula: H = I^2 * R * t = V * I * t = (V^2 / R) * t (in Joules, J)
 
 2. **Electric Power (P)**:
-   Rate at which electrical energy is consumed:
-   P = V * I = I^2 * R = V^2 / R
-   - SI Unit: Watt (W). 1 kW = 1000 W.
+   Rate of electrical energy dissipation:
+   P = V * I = I^2 * R = V^2 / R (in Watts, W)
 
-3. **Commercial Unit of Energy (Board Exam Favorite)**:
-   1 Kilowatt-hour (1 kWh) or 1 "Unit":
-   1 kWh = 1000 W * 3600 s = 3.6 * 10^6 Joules (3.6 x 10^6 J).`;
+3. **Commercial Unit of Energy (1 kWh / Board Favorite)**:
+   1 Kilowatt-hour (1 Unit) = 1 kW * 1 hour = 1000 W * 3600 s = 3.6 x 10^6 Joules.`;
   }
 
-  if (q.includes('solenoid') || q.includes('right hand thumb') || q.includes('field lines') || q.includes('magnetic field')) {
+  if (q.includes('solenoid') || q.includes('magnetic field') || q.includes('field lines')) {
     return `### Magnetic Field Lines & Solenoid (CBSE Class 10) 🧲
 1. **Properties of Magnetic Field Lines**:
-   - Emerge from the North pole and enter into the South pole outside the magnet (inside: South to North).
-   - Form closed continuous curves.
-   - Degree of closeness represents field strength (strongest near poles).
-   - **Crucial CBSE Rule**: Two magnetic field lines NEVER intersect! (If they did, a compass needle would point in two directions at the intersection, which is impossible).
+   - Emerge from North pole and merge at South pole outside the magnet (inside: South to North).
+   - Form continuous closed loops.
+   - Crowded lines indicate a stronger magnetic field.
+   - **Crucial Rule**: Field lines NEVER intersect (otherwise a compass needle at the intersection would point in two directions, which is physically impossible).
 
 2. **Right-Hand Thumb Rule**:
-   - Grasp a straight wire with your right hand such that the thumb points in current direction.
-   - Your curled fingers give the direction of concentric magnetic field lines.
+   - Imagine holding a current-carrying straight wire in your right hand with the thumb pointing in current direction.
+   - Your fingers curling around the conductor point in the direction of magnetic field lines.
 
-3. **Magnetic Field of a Solenoid**:
-   - A long coil of many circular turns of insulated copper wire.
-   - Field pattern is identical to a bar magnet.
+3. **Solenoid**:
+   - A coil of many circular turns of insulated copper wire wrapped closely in the shape of a cylinder.
+   - Magnetic field pattern is identical to a bar magnet.
    - Inside the solenoid, field lines are parallel straight lines, indicating a **uniform magnetic field**.
-   - An iron core placed inside produces a strong **Electromagnet**.`;
+   - Placing a soft iron rod inside creates a strong **Electromagnet**.`;
   }
 
-  if (q.includes('fuse') || q.includes('domestic') || q.includes('earth') || q.includes('short circuit') || q.includes('overloading')) {
-    return `### Domestic Electric Circuits & Safety (CBSE Class 10) 🏠
-1. **Wire Types**:
-   - Live wire (Positive): Red / Brown insulation (220 V in India).
-   - Neutral wire (Negative): Black / Blue insulation (0 V).
-   - Earth wire: Green / Yellow insulation (safety wire).
+  // 5. General syllabus guidance
+  return `Hello! I am **Enjoy Physics AI**, your dedicated tutor for CBSE Class 10 Physics! ⚡
 
-2. **Safety Devices**:
-   - **Electric Fuse**: A thin safety wire made of an alloy with high resistance and low melting point. Connected in SERIES with the live wire. Melts when excessive current flows, breaking the circuit.
-   - **Earthing Wire**: Connected to metallic appliance bodies. Provides a low-resistance path to the ground, protecting users from lethal electric shocks if leakage occurs.
+I am ready to help you with:
+1. 🔦 **Light – Reflection and Refraction** (Mirrors, Lenses, Sign Conventions, Ray Optics, Numericals)
+2. 👁️ **The Human Eye and the Colourful World** (Vision Defects, Dispersion, Scattering, Rainbows)
+3. ⚡ **Electricity** (Ohm's Law, Series/Parallel Resistors, Joule's Heating, Electric Power)
+4. 🧲 **Magnetic Effects of Electric Current** (Field Lines, Solenoids, Fleming's Rules, Electric Motor)
 
-3. **Overloading vs Short Circuit**:
-   - **Overloading**: Connecting too many high-power appliances to a single socket simultaneously, exceeding the safe current capacity.
-   - **Short Circuit**: When live wire touches neutral wire directly (due to damaged insulation or fault), circuit resistance drops near zero and extremely large current surges, risking fire.`;
-  }
-
-  if (q.includes('accommodation') || q.includes('presbyopia') || q.includes('twinkling')) {
-    return `### Accommodation & Atmospheric Optical Phenomena (CBSE Class 10) 👁️
-1. **Power of Accommodation**:
-   The ability of the eye lens to adjust its focal length using ciliary muscles.
-   - Near point for normal eye = 25 cm.
-   - Far point for normal eye = Infinity.
-
-2. **Presbyopia (Old-age defect)**:
-   - Gradual weakening of ciliary muscles and diminishing flexibility of eye lens with age.
-   - Person cannot read comfortably at 25 cm. Corrected using **bifocal lenses** (upper part concave for distant vision, lower part convex for reading).
-
-3. **Twinkling of Stars**:
-   - Caused by atmospheric refraction through layers of constantly shifting temperature and density.
-   - Apparent position fluctuates slightly, and light rays continuously bend, causing the star to twinkle.
-   - **Why Planets Don't Twinkle**: Planets are much closer to Earth and act as extended sources of light (a collection of point sources), averaging out fluctuations.`;
-  }
-
-  return `Hello! I’m **Enjoy Physics AI**, your dedicated CBSE Class 10 Physics tutor! ⚡
-
-You can ask me questions on:
-1. **Light – Reflection and Refraction** (Mirrors, Lenses, Sign Conventions, Numericals)
-2. **The Human Eye and the Colourful World** (Eye Defects, Dispersion, Scattering, Rainbows)
-3. **Electricity** (Ohm's Law, Resistance in Series/Parallel, Joule's Heating, Electric Power)
-4. **Magnetic Effects of Electric Current** (Field Lines, Solenoid, Fleming's Rules, Electric Motor)
-
-What would you like to understand or solve today?`;
+Please send your question or numerical problem, and I will solve and explain it step-by-step!`;
 }
