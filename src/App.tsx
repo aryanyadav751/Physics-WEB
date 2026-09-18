@@ -211,6 +211,13 @@ export const App: React.FC = () => {
             progress={progress}
             onResetProgress={handleResetProgress}
             onNavigateChapter={(chId) => handleNavigate('chapter', chId)}
+            onUpdateProgress={(updated) => {
+              setProgress(updated);
+              saveUserProgress(updated);
+              showToast('Study Plan updated successfully!');
+            }}
+            onNavigateSim={(simId) => handleNavigate('simulations', simId)}
+            onNavigateTutor={() => handleNavigate('ai-tutor')}
           />
         )}
       </main>

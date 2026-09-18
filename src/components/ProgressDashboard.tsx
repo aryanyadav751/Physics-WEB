@@ -5,6 +5,7 @@ import { SIMULATIONS_LIST } from '../data/simulationsData';
 import { computeStudyBadges, getTotalBadgeXP, StudyBadge } from '../utils/studyBadges';
 import { getStreakDetails } from '../utils/progressStorage';
 import { ProgressTrendChart } from './ProgressTrendChart';
+import { StudyPlanner } from './StudyPlanner';
 import {
   Award,
   CheckCircle2,
@@ -27,12 +28,18 @@ interface ProgressDashboardProps {
   progress: UserProgress;
   onResetProgress?: () => void;
   onNavigateChapter?: (chId: string) => void;
+  onUpdateProgress?: (updated: UserProgress) => void;
+  onNavigateSim?: (simId?: string) => void;
+  onNavigateTutor?: () => void;
 }
 
 export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
   progress,
   onResetProgress,
   onNavigateChapter,
+  onUpdateProgress,
+  onNavigateSim,
+  onNavigateTutor,
 }) => {
   const [badgeFilter, setBadgeFilter] = useState<'all' | 'unlocked' | 'locked'>('all');
   const [selectedBadge, setSelectedBadge] = useState<StudyBadge | null>(null);
@@ -81,26 +88,35 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
             <Sparkles className="w-4 h-4" /> CBSE Class 10 Gamified Learning Hub
           </div>
           <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white mt-1">
-            Learning Progress & Study Badges
+            Learning Progress & Study Planner
           </h1>
           <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
-            Track syllabus completion, earn physics study badges, and master board exam concepts.
+            Set daily chapter completion goals based on your exam date, track syllabus progress, and earn study badges.
           </p>
         </div>
 
-        {onResetProgress && (
-          <button
-            type="button"
-            onClick={() => {
-              if (window.confirm('Are you sure you want to reset your learning progress and badges?')) {
-                onResetProgress();
-              }
-            }}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900 transition-colors self-start sm:self-auto"
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          <a
+            href="#study-planner-section"
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
           >
-            <RotateCcw className="w-3.5 h-3.5" /> Reset Progress
-          </button>
-        )}
+            <Target className="w-3.5 h-3.5" /> Exam Study Planner
+          </a>
+
+          {onResetProgress && (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm('Are you sure you want to reset your learning progress and badges?')) {
+                  onResetProgress();
+                }
+              }}
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900 transition-colors"
+            >
+              <RotateCcw className="w-3.5 h-3.5" /> Reset Progress
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Primary KPI Grid */}
@@ -227,6 +243,15 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
           ))}
         </div>
       </div>
+
+      {/* CBSE BOARD EXAM STUDY PLANNER */}
+      <StudyPlanner
+        progress={progress}
+        onUpdateProgress={onUpdateProgress}
+        onNavigateChapter={onNavigateChapter}
+        onNavigateSim={onNavigateSim}
+        onNavigateTutor={onNavigateTutor}
+      />
 
       {/* RECHARTS LEARNING TREND CHART */}
       <ProgressTrendChart

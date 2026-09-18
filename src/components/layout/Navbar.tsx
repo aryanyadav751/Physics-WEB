@@ -273,8 +273,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => handleNav('progress')}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-blue-700 dark:text-blue-300 text-xs font-bold"
-              title="View your learning progress"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-blue-700 dark:text-blue-300 text-xs font-bold cursor-pointer"
+              title="View your learning progress & board exam study planner"
             >
               <Award className="w-3.5 h-3.5 text-blue-500" />
               <span className="font-mono">{progressPercent}%</span>
@@ -379,15 +379,10 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             type="button"
             onClick={() => handleNav('progress')}
-            className="w-full text-left py-2 px-3 rounded-lg text-sm font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 flex items-center justify-between"
+            className="w-full text-left py-2 px-3 rounded-lg text-sm font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 flex items-center justify-between font-bold"
           >
-            <span>Progress & Study Badges</span>
-            {streakDetails && (
-              <span className="flex items-center gap-1 text-xs font-mono font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/60 px-2 py-0.5 rounded-md border border-orange-200 dark:border-orange-900">
-                <Flame className="w-3 h-3 fill-orange-500 text-orange-500" />
-                {streakDetails.currentStreak} {streakDetails.currentStreak === 1 ? 'Day' : 'Days'}
-              </span>
-            )}
+            <span>Progress & Study Planner</span>
+            <span className="text-[10px] bg-blue-100 dark:bg-blue-900/60 px-2 py-0.5 rounded-full font-bold">Planner</span>
           </button>
         </div>
       )}

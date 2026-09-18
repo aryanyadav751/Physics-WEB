@@ -189,6 +189,40 @@ export interface UserProgress {
     lastActiveDate: string;
     activeDates: string[];
   };
+  studyPlan?: StudyPlan;
+}
+
+export interface DailyStudyGoal {
+  date: string; // YYYY-MM-DD
+  chapterId: string;
+  chapterTitle: string;
+  topicId: string;
+  topicTitle: string;
+  isCompleted: boolean;
+  targetMinutes: number;
+}
+
+export interface ChapterDeadline {
+  chapterId: string;
+  chapterNumber: number;
+  chapterTitle: string;
+  targetCompletionDate: string;
+  totalTopics: number;
+  completedTopics: number;
+  isCompleted: boolean;
+  status: 'completed' | 'on-track' | 'behind' | 'upcoming';
+}
+
+export interface StudyPlan {
+  examDate: string; // YYYY-MM-DD
+  examName: string; // e.g. "CBSE Class 10 Science Board Exam"
+  dailyStudyMinutes: number; // e.g. 45
+  pacePreference: 'balanced' | 'accelerated' | 'thorough';
+  targetChapterIds: string[];
+  customDailyTopics: number; // topics per day or week ratio
+  completedGoalDates: string[]; // dates on which daily goals were marked complete
+  createdAt: string;
+  lastCalculatedAt: string;
 }
 
 export type { StudyBadge } from '../utils/studyBadges';
