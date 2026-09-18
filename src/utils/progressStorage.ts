@@ -58,28 +58,166 @@ export const INITIAL_PROGRESS: UserProgress = {
   solvedNumericalsCount: 0,
   dailyChallengeCompletions: [],
   badgeUnlockDates: {},
+  studyStreak: {
+    currentStreak: 1,
+    longestStreak: 1,
+    lastActiveDate: '',
+    activeDates: [],
+  },
 };
+
+export function getTodayDateString(): string {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function getYesterdayDateString(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Updates daily study streak based on consecutive calendar day interactions.
+ */
+export function updateStudyStreak(current: UserProgress): UserProgress {
+  const today = getTodayDateString();
+  const yesterday = getYesterdayDateString();
+
+  const prevStreak = current.studyStreak || {
+    currentStreak: 0,
+    longestStreak: 0,
+    lastActiveDate: '',
+    activeDates: [],
+  };
+
+  const activeDates = Array.from(new Set([...(prevStreak.activeDates || []), today]));
+
+  if (prevStreak.lastActiveDate === today) {
+    // Already counted today, retain streak
+    return {
+      ...current,
+      studyStreak: {
+        ...prevStreak,
+        activeDates,
+      },
+    };
+  }
+
+  let newCurrentStreak = 1;
+  if (prevStreak.lastActiveDate === yesterday) {
+    // Interacted yesterday -> streak increments
+    newCurrentStreak = (prevStreak.currentStreak || 0) + 1;
+  } else if (!prevStreak.lastActiveDate) {
+    // First interaction
+    newCurrentStreak = 1;
+  } else {
+    // Missed at least one day -> reset to 1
+    newCurrentStreak = 1;
+  }
+
+  const newLongestStreak = Math.max(prevStreak.longestStreak || 0, newCurrentStreak);
+
+  const updated: UserProgress = {
+    ...current,
+    studyStreak: {
+      currentStreak: newCurrentStreak,
+      longestStreak: newLongestStreak,
+      lastActiveDate: today,
+      activeDates,
+    },
+  };
+
+  saveUserProgress(updated);
+  return updated;
+}
+
+export interface StreakDetails {
+  currentStreak: number;
+  longestStreak: number;
+  isTodayActive: boolean;
+  lastActiveDate: string;
+  activeDates: string[];
+  last7Days: Array<{ label: string; date: string; isActive: boolean }>;
+}
+
+export function getStreakDetails(progress: UserProgress): StreakDetails {
+  const streak = progress.studyStreak || {
+    currentStreak: 1,
+    longestStreak: 1,
+    lastActiveDate: '',
+    activeDates: [],
+  };
+
+  const today = getTodayDateString();
+  const isTodayActive = streak.lastActiveDate === today || (streak.activeDates || []).includes(today);
+
+  // Compute last 7 days representation
+  const last7Days: Array<{ label: string; date: string; isActive: boolean }> = [];
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const yr = d.getFullYear();
+    const mo = String(d.getMonth() + 1).padStart(2, '0');
+    const da = String(d.getDate()).padStart(2, '0');
+    const dateStr = `${yr}-${mo}-${da}`;
+    const dayLabel = i === 0 ? 'Today' : dayNames[d.getDay()];
+
+    last7Days.push({
+      label: dayLabel,
+      date: dateStr,
+      isActive: (streak.activeDates || []).includes(dateStr) || (i === 0 && isTodayActive),
+    });
+  }
+
+  return {
+    currentStreak: Math.max(1, streak.currentStreak || 1),
+    longestStreak: Math.max(streak.longestStreak || 1, streak.currentStreak || 1),
+    isTodayActive,
+    lastActiveDate: streak.lastActiveDate || today,
+    activeDates: streak.activeDates || [today],
+    last7Days,
+  };
+}
 
 export function loadUserProgress(): UserProgress {
   if (typeof window === 'undefined') return INITIAL_PROGRESS;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return INITIAL_PROGRESS;
+    if (!raw) {
+      const initial = updateStudyStreak(INITIAL_PROGRESS);
+      return initial;
+    }
     const parsed = JSON.parse(raw);
-    return {
+    const merged: UserProgress = {
       ...INITIAL_PROGRESS,
       ...parsed,
       aiQuestionsCount: parsed.aiQuestionsCount || 0,
       solvedNumericalsCount: parsed.solvedNumericalsCount || 0,
       dailyChallengeCompletions: parsed.dailyChallengeCompletions || [],
       badgeUnlockDates: parsed.badgeUnlockDates || {},
+      studyStreak: parsed.studyStreak || {
+        currentStreak: 1,
+        longestStreak: 1,
+        lastActiveDate: '',
+        activeDates: [],
+      },
       achievements: INITIAL_ACHIEVEMENTS.map((a) => {
         const existing = parsed.achievements?.find((p: any) => p.id === a.id);
         return existing || a;
       }),
     };
+    return updateStudyStreak(merged);
   } catch {
-    return INITIAL_PROGRESS;
+    return updateStudyStreak(INITIAL_PROGRESS);
   }
 }
 

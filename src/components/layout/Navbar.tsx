@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { CHAPTERS_DATA } from '../../data/chaptersData';
+import { StreakDetails } from '../../utils/progressStorage';
+import { StudyStreakBadge } from './StudyStreakBadge';
 import {
   Atom,
   BookOpen,
@@ -17,6 +19,7 @@ import {
   Eye,
   FileText,
   Layers,
+  Flame,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -26,6 +29,7 @@ interface NavbarProps {
   onToggleDarkMode: () => void;
   onOpenSearch: () => void;
   progressPercent: number;
+  streakDetails?: StreakDetails;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -35,6 +39,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleDarkMode,
   onOpenSearch,
   progressPercent,
+  streakDetails,
 }) => {
   const [isChaptersOpen, setIsChaptersOpen] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
@@ -256,6 +261,14 @@ export const Navbar: React.FC<NavbarProps> = ({
               {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
             </button>
 
+            {/* Visual Study Streak Indicator */}
+            {streakDetails && (
+              <StudyStreakBadge
+                streakDetails={streakDetails}
+                onNavigateToPractice={() => handleNav('practice')}
+              />
+            )}
+
             {/* Progress Badge Indicator */}
             <button
               type="button"
@@ -366,9 +379,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             type="button"
             onClick={() => handleNav('progress')}
-            className="w-full text-left py-2 px-3 rounded-lg text-sm font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100"
+            className="w-full text-left py-2 px-3 rounded-lg text-sm font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 flex items-center justify-between"
           >
-            Progress & Study Badges
+            <span>Progress & Study Badges</span>
+            {streakDetails && (
+              <span className="flex items-center gap-1 text-xs font-mono font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/60 px-2 py-0.5 rounded-md border border-orange-200 dark:border-orange-900">
+                <Flame className="w-3 h-3 fill-orange-500 text-orange-500" />
+                {streakDetails.currentStreak} {streakDetails.currentStreak === 1 ? 'Day' : 'Days'}
+              </span>
+            )}
           </button>
         </div>
       )}

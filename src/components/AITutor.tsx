@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { cleanLatexToPlainText } from '../utils/latexToPlainText';
+import { useSessionChat, ChatMessage } from '../utils/chatSessionStore';
 import {
   Sparkles,
   Send,
@@ -21,16 +22,8 @@ import {
   Lightbulb,
   FileText,
   AlertCircle,
+  MessageSquare,
 } from 'lucide-react';
-
-interface ChatMessage {
-  id: string;
-  sender: 'user' | 'assistant';
-  text: string;
-  timestamp: string;
-  image?: string; // Data URL for display
-  isError?: boolean;
-}
 
 interface AITutorProps {
   onQuestionAsked?: () => void;
@@ -54,14 +47,7 @@ export const AITutor: React.FC<AITutorProps> = ({
   compactMode = false,
   onCloseCompact,
 }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'welcome-msg',
-      sender: 'assistant',
-      text: `Hello! I am **Enjoy Physics AI**, your dedicated tutor for CBSE Class 10 Physics.\n\nI can help you with:\n1. 🔦 **Light – Reflection and Refraction**\n2. 👁️ **The Human Eye and the Colourful World**\n3. ⚡ **Electricity**\n4. 🧲 **Magnetic Effects of Electric Current**\n\nYou can type your doubts, upload a photo of a diagram or question, or tap 🎙️ **Voice Chat** to speak your question!`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    },
-  ]);
+  const [messages, setMessages, resetSessionChat] = useSessionChat();
 
   const [inputQuery, setInputQuery] = useState<string>(initialQuery || '');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -336,19 +322,12 @@ export const AITutor: React.FC<AITutorProps> = ({
   };
 
   const handleClearChat = () => {
-    if (window.confirm('Are you sure you want to clear this conversation?')) {
+    if (window.confirm('Clear your session chat history? (History resets automatically on page reload)')) {
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         window.speechSynthesis.cancel();
       }
       setSpeakingMessageId(null);
-      setMessages([
-        {
-          id: 'welcome-msg',
-          sender: 'assistant',
-          text: `Hello! I am **Enjoy Physics AI**, your dedicated tutor for CBSE Class 10 Physics.\n\nAsk me any concept, formula, ray diagram, or numerical problem on the 4 supported chapters!`,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        },
-      ]);
+      resetSessionChat();
     }
   };
 
@@ -385,6 +364,14 @@ export const AITutor: React.FC<AITutorProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            <span
+              className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-mono font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
+              title="All chat messages are preserved across views until the webpage is refreshed or closed"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
+              Session: {messages.length} {messages.length === 1 ? 'msg' : 'msgs'}
+            </span>
+
             <button
               type="button"
               onClick={handleClearChat}
@@ -408,7 +395,11 @@ export const AITutor: React.FC<AITutorProps> = ({
                 Enjoy Physics AI
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               </div>
-              <div className="text-[10px] text-slate-500 font-mono">Class 10 CBSE Physics</div>
+              <div className="text-[10px] text-slate-500 font-mono flex items-center gap-1">
+                <span>Class 10 CBSE</span>
+                <span>•</span>
+                <span>{messages.length} msgs saved</span>
+              </div>
             </div>
           </div>
 

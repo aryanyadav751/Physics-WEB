@@ -183,6 +183,12 @@ export interface UserProgress {
     total: number;
   }>;
   badgeUnlockDates?: Record<string, string>;
+  studyStreak?: {
+    currentStreak: number;
+    longestStreak: number;
+    lastActiveDate: string;
+    activeDates: string[];
+  };
 }
 
 export type { StudyBadge } from '../utils/studyBadges';

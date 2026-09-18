@@ -26,6 +26,7 @@ import {
   recordAIInteraction,
   recordDailyChallenge,
   resetProgress,
+  getStreakDetails,
 } from './utils/progressStorage';
 import { getInitialTheme, setTheme } from './utils/theme';
 import { UserProgress } from './types/physics';
@@ -129,6 +130,7 @@ export const App: React.FC = () => {
   const progressPercent = Math.round((progress.completedTopics.length / (totalTopics || 1)) * 100);
 
   const selectedChapter = CHAPTERS_DATA.find((c) => c.id === activeChapterId) || CHAPTERS_DATA[0];
+  const streakDetails = getStreakDetails(progress);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
@@ -148,6 +150,7 @@ export const App: React.FC = () => {
         onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
         onOpenSearch={() => setIsSearchOpen(true)}
         progressPercent={progressPercent}
+        streakDetails={streakDetails}
       />
 
       {/* Main View Switcher */}

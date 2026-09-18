@@ -3,6 +3,7 @@ import { UserProgress } from '../types/physics';
 import { CHAPTERS_DATA } from '../data/chaptersData';
 import { SIMULATIONS_LIST } from '../data/simulationsData';
 import { computeStudyBadges, getTotalBadgeXP, StudyBadge } from '../utils/studyBadges';
+import { getStreakDetails } from '../utils/progressStorage';
 import { ProgressTrendChart } from './ProgressTrendChart';
 import {
   Award,
@@ -18,6 +19,8 @@ import {
   Lock,
   ChevronRight,
   TrendingUp,
+  Flame,
+  Calendar,
 } from 'lucide-react';
 
 interface ProgressDashboardProps {
@@ -51,6 +54,7 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
       : 0;
 
   // Study Badges calculation
+  const streakDetails = getStreakDetails(progress);
   const badges = computeStudyBadges(progress);
   const totalXP = getTotalBadgeXP(badges);
   const unlockedBadges = badges.filter((b) => b.isUnlocked);
@@ -176,6 +180,51 @@ export const ProgressDashboard: React.FC<ProgressDashboardProps> = ({
           <span className="text-[11px] text-amber-700 dark:text-amber-300 font-medium block">
             ⚡ {totalXP} XP Earned from Milestones
           </span>
+        </div>
+      </div>
+
+      {/* Daily Study Streak Banner */}
+      <div className="rounded-2xl border border-amber-300 dark:border-amber-700/60 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-rose-500/10 dark:from-amber-950/30 dark:via-orange-950/20 dark:to-slate-900 p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/25 shrink-0">
+            <Flame className="w-6 h-6 fill-white" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                Daily Study Streak: {streakDetails.currentStreak} {streakDetails.currentStreak === 1 ? 'Day' : 'Days'} in a Row!
+              </h3>
+              {streakDetails.isTodayActive && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">
+                  🔥 Active Today
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+              Longest study streak: <span className="font-bold text-orange-600 dark:text-orange-400">{streakDetails.longestStreak} {streakDetails.longestStreak === 1 ? 'day' : 'days'}</span>. Consistent daily physics practice boosts recall by up to 300%.
+            </p>
+          </div>
+        </div>
+
+        {/* Mini 7-day strip */}
+        <div className="flex items-center gap-1.5 self-start md:self-auto bg-white/70 dark:bg-slate-900/70 backdrop-blur-xs p-2 rounded-xl border border-amber-200/60 dark:border-amber-900/40">
+          {streakDetails.last7Days.map((d) => (
+            <div key={d.date} className="flex flex-col items-center gap-1">
+              <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                {d.label}
+              </span>
+              <div
+                className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold ${
+                  d.isActive
+                    ? 'bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-xs'
+                    : 'bg-slate-200 dark:bg-slate-800 text-slate-400'
+                }`}
+                title={`${d.date}: ${d.isActive ? 'Active study session' : 'Rest day'}`}
+              >
+                {d.isActive ? '✓' : '•'}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
